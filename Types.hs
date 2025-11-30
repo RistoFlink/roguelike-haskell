@@ -43,17 +43,18 @@ data Item = Item
 
 -- Complete game state
 data GameState = GameState
-{ playerPos :: Position
-, playerHealth :: Int
-, playerMaxHealth :: Int
-, playerAttack :: Int
-, dungeon :: [Tile]
-, monsters :: [Monster]
-, items :: [Item]
-, message :: String
-, gameOver :: Bool
-, rng :: StdGen
-} deriving (Show)
+  { playerPos :: Position,
+    playerHealth :: Int,
+    playerMaxHealth :: Int,
+    playerAttack :: Int,
+    dungeon :: [Tile],
+    monsters :: [Monster],
+    items :: [Item],
+    message :: String,
+    gameOver :: Bool,
+    rng :: StdGen
+  }
+  deriving (Show)
 
 -- Constants
 dungeonWidth :: Int
