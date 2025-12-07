@@ -31,9 +31,20 @@ generateRooms :: Int -> StdGen -> [Room] -> ([Room], StdGen)
 generateRooms 0 gen rooms = (rooms, gen)
 generateRooms n gen rooms =
   let (room, gen1) = generateRoom gen
-   in if any (overlaps room) rooms
-        then generateRooms n gen1 rooms -- Skip overlapping rooms
-        else generateRooms (n - 1) gen1 (room : rooms)
+      (room', gen2) = tryPlaceRoom room gen1 rooms 30 -- Try up to 30 times
+   in case room' of
+        Just r -> generateRooms (n - 1) gen2 (r : rooms)
+        Nothing -> generateRooms (n - 1) gen2 rooms -- Give up on this room
+
+-- Try to place a room, regenerating if it overlaps
+tryPlaceRoom :: Room -> StdGen -> [Room] -> Int -> (Maybe Room, StdGen)
+tryPlaceRoom _ gen _ 0 = (Nothing, gen) -- Give up after max attempts
+tryPlaceRoom room gen rooms attempts =
+  if any (overlaps room) rooms
+    then
+      let (newRoom, gen1) = generateRoom gen
+       in tryPlaceRoom newRoom gen1 rooms (attempts - 1)
+    else (Just room, gen)
 
 -- Generate a single random room
 generateRoom :: StdGen -> (Room, StdGen)
@@ -44,14 +55,14 @@ generateRoom gen =
       (y, gen4) = randomR (2, dungeonHeight - h - 2) gen3
    in (Room x y w h, gen4)
 
--- Check if two rooms overlap
+-- Check if two rooms overlap (with 1 tile buffer)
 overlaps :: Room -> Room -> Bool
 overlaps r1 r2 =
   not
-    ( roomX r1 + roomWidth r1 < roomX r2 - 1
-        || roomX r2 + roomWidth r2 < roomX r1 - 1
-        || roomY r1 + roomHeight r1 < roomY r2 - 1
-        || roomY r2 + roomHeight r2 < roomY r1 - 1
+    ( roomX r1 + roomWidth r1 + 1 < roomX r2
+        || roomX r2 + roomWidth r2 + 1 < roomX r1
+        || roomY r1 + roomHeight r1 + 1 < roomY r2
+        || roomY r2 + roomHeight r2 + 1 < roomY r1
     )
 
 -- Carve a room into the dungeon
