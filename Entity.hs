@@ -68,7 +68,6 @@ moveMonster state monster =
       newPos = Position (mx + dx) (my + dy)
    in if getTile (dungeon state) newPos == Floor
         && not (any (\m -> mPos m == newPos) (monsters state))
-        && newPos /= playerPos state
         then monster {mPos = newPos}
         else monster
 
