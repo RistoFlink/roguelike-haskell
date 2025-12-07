@@ -8,45 +8,103 @@ where
 import System.Random (StdGen, randomR)
 import Types
 
--- Generate random dungeon with walls and floors
+-- A rectangular room
+data Room = Room
+  { roomX :: Int,
+    roomY :: Int,
+    roomWidth :: Int,
+    roomHeight :: Int
+  }
+  deriving (Show)
+
+-- Generate a dungeon with rooms and corridors
 generateDungeon :: StdGen -> ([[Tile]], StdGen)
 generateDungeon gen =
-  let (walls, gen') = makeRandomWalls gen
-   in (makeBorder walls, gen')
-  where
-    -- Generate random interior tiles
-    makeRandomWalls :: StdGen -> ([[Tile]], StdGen)
-    makeRandomWalls g = makeRows dungeonHeight g
+  let emptyDungeon = replicate dungeonHeight (replicate dungeonWidth Wall)
+      (rooms, gen1) = generateRooms 8 gen []
+      dungeonWithRooms = foldl carveRoom emptyDungeon rooms
+      dungeonWithCorridors = carveCorridors dungeonWithRooms rooms
+   in (dungeonWithCorridors, gen1)
 
-    -- Generate multiple rows
-    makeRows :: Int -> StdGen -> ([[Tile]], StdGen)
-    makeRows 0 g = ([], g)
-    makeRows n g =
-      let (row, g') = makeRow dungeonWidth g
-          (rest, g'') = makeRows (n - 1) g'
-       in (row : rest, g'')
+-- Generate a list of non-overlapping rooms
+generateRooms :: Int -> StdGen -> [Room] -> ([Room], StdGen)
+generateRooms 0 gen rooms = (rooms, gen)
+generateRooms n gen rooms =
+  let (room, gen1) = generateRoom gen
+   in if any (overlaps room) rooms
+        then generateRooms n gen1 rooms -- Skip overlapping rooms
+        else generateRooms (n - 1) gen1 (room : rooms)
 
-    -- Generate a single row of tiles
-    makeRow :: Int -> StdGen -> ([Tile], StdGen)
-    makeRow 0 g = ([], g)
-    makeRow n g =
-      let (r, g') = randomR (0, 100) g :: (Int, StdGen)
-          tile = if r < 20 then Wall else Floor
-          (rest, g'') = makeRow (n - 1) g'
-       in (tile : rest, g'')
+-- Generate a single random room
+generateRoom :: StdGen -> (Room, StdGen)
+generateRoom gen =
+  let (w, gen1) = randomR (6, 12) gen
+      (h, gen2) = randomR (5, 8) gen1
+      (x, gen3) = randomR (2, dungeonWidth - w - 2) gen2
+      (y, gen4) = randomR (2, dungeonHeight - h - 2) gen3
+   in (Room x y w h, gen4)
 
-    -- Add walls around the border
-    makeBorder :: [[Tile]] -> [[Tile]]
-    makeBorder rows =
-      let topBottom = replicate dungeonWidth Wall
-          middle = map addSideWalls rows
-       in topBottom : take (dungeonHeight - 2) middle ++ [topBottom]
+-- Check if two rooms overlap
+overlaps :: Room -> Room -> Bool
+overlaps r1 r2 =
+  not
+    ( roomX r1 + roomWidth r1 < roomX r2 - 1
+        || roomX r2 + roomWidth r2 < roomX r1 - 1
+        || roomY r1 + roomHeight r1 < roomY r2 - 1
+        || roomY r2 + roomHeight r2 < roomY r1 - 1
+    )
 
-    -- Add walls to left and right of a row
-    addSideWalls :: [Tile] -> [Tile]
-    addSideWalls row = Wall : take (dungeonWidth - 2) row ++ [Wall]
+-- Carve a room into the dungeon
+carveRoom :: [[Tile]] -> Room -> [[Tile]]
+carveRoom dungeon room =
+  let coords =
+        [ (x, y)
+          | y <- [roomY room .. roomY room + roomHeight room - 1],
+            x <- [roomX room .. roomX room + roomWidth room - 1]
+        ]
+   in foldl (\d (x, y) -> setTile d (Position x y) Floor) dungeon coords
 
--- Find a random empty floor space
+-- Carve corridors between all adjacent rooms
+carveCorridors :: [[Tile]] -> [Room] -> [[Tile]]
+carveCorridors dungeon [] = dungeon
+carveCorridors dungeon [_] = dungeon
+carveCorridors dungeon (r1 : r2 : rest) =
+  let dungeon' = carveCorridor dungeon (roomCenter r1) (roomCenter r2)
+   in carveCorridors dungeon' (r2 : rest)
+
+-- Get the center of a room
+roomCenter :: Room -> Position
+roomCenter room =
+  Position
+    (roomX room + roomWidth room `div` 2)
+    (roomY room + roomHeight room `div` 2)
+
+-- Carve an L-shaped corridor between two positions
+carveCorridor :: [[Tile]] -> Position -> Position -> [[Tile]]
+carveCorridor dungeon (Position x1 y1) (Position x2 y2) =
+  let horizontalCoords = [(x, y1) | x <- [min x1 x2 .. max x1 x2]]
+      verticalCoords = [(x2, y) | y <- [min y1 y2 .. max y1 y2]]
+      allCoords = horizontalCoords ++ verticalCoords
+   in foldl (\d (x, y) -> setTile d (Position x y) Floor) dungeon allCoords
+
+-- Set a tile at a specific position
+setTile :: [[Tile]] -> Position -> Tile -> [[Tile]]
+setTile dungeon (Position px py) tile
+  | py < 0 || py >= length dungeon = dungeon
+  | px < 0 = dungeon
+  | otherwise =
+      let (before, rest) = splitAt py dungeon
+       in case rest of
+            [] -> dungeon
+            (row : after) ->
+              let (rowBefore, rowRest) = splitAt px row
+               in case rowRest of
+                    [] -> dungeon
+                    (_ : rowAfter) ->
+                      let newRow = rowBefore ++ [tile] ++ rowAfter
+                       in before ++ [newRow] ++ after
+
+-- Find a random empty floor space in the dungeon
 findEmptySpace :: [[Tile]] -> StdGen -> (Position, StdGen)
 findEmptySpace dungeon gen =
   let (px, gen1) = randomR (1, dungeonWidth - 2) gen
@@ -56,7 +114,7 @@ findEmptySpace dungeon gen =
         then (pos, gen2)
         else findEmptySpace dungeon gen2
 
--- Get the tile at specfic position
+-- Get the tile at a specific position
 getTile :: [[Tile]] -> Position -> Tile
 getTile dungeon (Position px py)
   | py < 0 || py >= length dungeon = Wall
