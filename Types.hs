@@ -26,6 +26,15 @@ data Tile
   | Door
   deriving (Eq, Show)
 
+-- Type of entities (monsters, items, etc.)
+data Entity
+  = Player
+  | Goblin
+  | Orc
+  | Potion
+  | Sword
+  deriving (Eq, Show)
+
 -- Monster with position, type, and health
 data Monster = Monster
   { mPos :: Position,
@@ -47,7 +56,7 @@ data GameState = GameState
     playerHealth :: Int,
     playerMaxHealth :: Int,
     playerAttack :: Int,
-    dungeon :: [Tile],
+    dungeon :: [[Tile]],
     monsters :: [Monster],
     items :: [Item],
     message :: String,

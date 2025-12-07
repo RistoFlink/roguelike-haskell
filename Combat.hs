@@ -33,7 +33,7 @@ attackMonster monster state =
       newMonsters =
         if newHealth <= 0
           then delete monster (monsters state)
-          else map updateMonster (monsters state)
+          else map (updateMonster newHealth) (monsters state)
       msg =
         if newHealth <= 0
           then "You defeated the " ++ show (mType monster) ++ "!"
@@ -41,7 +41,7 @@ attackMonster monster state =
       stateAfterAttack = state {monsters = newMonsters, message = msg}
    in moveMonsters stateAfterAttack
   where
-    updateMonster m =
+    updateMonster hp m =
       if m == monster
-        then m {mHealth = newHealth}
+        then m {mHealth = hp}
         else m
