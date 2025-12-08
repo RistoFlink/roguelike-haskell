@@ -38,38 +38,52 @@ spawnItems dungeon n gen =
 -- Move all monsters and handle combat
 moveMonsters :: GameState -> GameState
 moveMonsters state =
-  let movedMonsters = map (moveMonster state) (monsters state)
-      (playerDamage, msgs) = foldl calcDamage (0, []) movedMonsters
+  let results = map (moveMonster state) (monsters state)
+      movedMonsters = map fst results
+      didAttackList = map snd results
+      (playerDamage, msgs) = foldl calcDamage (0, []) (zip movedMonsters didAttackList)
       newHealth = playerHealth state - playerDamage
       combatMsg =
         if playerDamage > 0
           then unwords msgs ++ " (-" ++ show playerDamage ++ " HP)"
           else ""
       isGameOver = newHealth <= 0
+      currentMsg = message state
+      finalMsg =
+        if isGameOver
+          then "You died! Press Q to quit."
+          else if null combatMsg
+            then currentMsg
+            else if null currentMsg
+              then combatMsg
+              else currentMsg ++ " " ++ combatMsg
    in state
         { monsters = movedMonsters,
           playerHealth = newHealth,
-          message = if isGameOver then "You died! Press Q to quit." else combatMsg,
+          message = finalMsg,
           gameOver = isGameOver
         }
   where
-    calcDamage (dmg, msgs) monster =
-      if mPos monster == playerPos state
+    calcDamage (dmg, msgs) (_, didAttack) =
+      if didAttack
         then (dmg + 2, msgs ++ ["Monster attacks!"])
         else (dmg, msgs)
 
 -- Move a single monster toward the player
-moveMonster :: GameState -> Monster -> Monster
+moveMonster :: GameState -> Monster -> (Monster, Bool)
 moveMonster state monster =
   let Position mx my = mPos monster
       Position px py = playerPos state
       dx = signum (px - mx)
       dy = signum (py - my)
       newPos = Position (mx + dx) (my + dy)
-   in if getTile (dungeon state) newPos == Floor
-        && not (any (\m -> mPos m == newPos) (monsters state))
-        then monster {mPos = newPos}
-        else monster
+      isPlayerPos = newPos == playerPos state
+   in if isPlayerPos
+        then (monster, True)
+        else if getTile (dungeon state) newPos == Floor
+                && not (any (\m -> mPos m == newPos) (monsters state))
+                then (monster {mPos = newPos}, False)
+                else (monster, False)
 
 -- Pick up an item and apply its effect
 pickupItem :: Item -> GameState -> GameState

@@ -1,10 +1,11 @@
 module Rendering
   ( renderGame,
     clearScreen,
+    hideCursor,
+    showCursor,
   )
 where
 
-import Control.Monad (forM_)
 import Data.List (find)
 import Data.Maybe (isJust)
 import Types
@@ -29,30 +30,36 @@ bold s = "\ESC[1m" ++ s ++ resetColor
 -- Render the entire game state to the terminal
 renderGame :: GameState -> IO ()
 renderGame state = do
-  clearScreen
-  -- Display stats with colors
-  putStrLn $
-    bold "HP: "
-      ++ (if playerHealth state < 5 then brightRed else green)
-        (show (playerHealth state) ++ "/" ++ show (playerMaxHealth state))
-      ++ bold " | ATK: "
-      ++ cyan (show (playerAttack state))
-      ++ bold " | Monsters: "
-      ++ red (show (length $ monsters state))
-  putStrLn (replicate dungeonWidth '-')
+  let header =
+        bold "HP: "
+          ++ (if playerHealth state < 5 then brightRed else green)
+            (show (playerHealth state) ++ "/" ++ show (playerMaxHealth state))
+          ++ bold " | ATK: "
+          ++ cyan (show (playerAttack state))
+          ++ bold " | Monsters: "
+          ++ red (show (length $ monsters state))
+          ++ clearRestOfLine
 
-  -- Display the dungeon map
-  forM_ [0 .. dungeonHeight - 1] $ \y -> do
-    forM_ [0 .. dungeonWidth - 1] $ \x -> do
-      let pos = Position x y
-      putStr $ getCharAtPosition pos state
-    putStrLn ""
+      separator = replicate dungeonWidth '-' ++ clearRestOfLine
 
-  putStrLn (replicate dungeonWidth '-')
-  putStrLn $ message state
-  if gameOver state
-    then putStrLn $ red "\nGAME OVER"
-    else putStrLn $ bold "\nControls: WASD to move, Q to quit"
+      mapLines =
+        [ concat [getCharAtPosition (Position x y) state | x <- [0 .. dungeonWidth - 1]] ++ clearRestOfLine
+          | y <- [0 .. dungeonHeight - 1]
+        ]
+
+      msg = message state ++ clearRestOfLine
+      
+      footer = 
+        if gameOver state
+          then red "GAME OVER" ++ clearRestOfLine
+          else bold "Controls: WASD to move, Q to quit" ++ clearRestOfLine
+
+      frame =
+        hideCursor
+          ++ "\ESC[H" -- Move cursor to home
+          ++ unlines ([header, separator] ++ mapLines ++ [separator, msg, clearRestOfLine, footer])
+
+  putStr frame
 
 -- Determine what character to display at a position
 getCharAtPosition :: Position -> GameState -> String
@@ -97,3 +104,15 @@ getTile dungeon (Position px py)
 -- Clear the terminal screen
 clearScreen :: IO ()
 clearScreen = putStr "\ESC[H"
+
+-- Clear the rest of the current line
+clearRestOfLine :: String
+clearRestOfLine = "\ESC[K"
+
+-- Hide the cursor
+hideCursor :: String
+hideCursor = "\ESC[?25l"
+
+-- Show the cursor
+showCursor :: String
+showCursor = "\ESC[?25h"

@@ -3,7 +3,7 @@ module Main where
 import Combat (movePlayer)
 import Dungeon (findEmptySpace, generateDungeon)
 import Entity (spawnItems, spawnMonsters)
-import Rendering (renderGame)
+import Rendering (renderGame, showCursor)
 import System.IO (BufferMode (NoBuffering), hSetBuffering, hSetEcho, stdin, stdout)
 import System.Random (getStdGen)
 import Types
@@ -35,11 +35,15 @@ gameLoop :: GameState -> IO ()
 gameLoop state = do
   renderGame state
   if gameOver state
-    then putStrLn "\nThanks for playing!"
+    then putStrLn $ "\nThanks for playing!" ++ showCursor
     else do
       c <- getChar
       let newState = handleInput c state
-      gameLoop newState
+      if gameOver newState 
+        then do
+             renderGame newState
+             putStrLn $ "\nThanks for playing!" ++ showCursor
+        else gameLoop newState
 
 -- Player input handling
 handleInput :: Char -> GameState -> GameState
