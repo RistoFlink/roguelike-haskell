@@ -8,7 +8,7 @@ where
 
 import Data.List (find)
 import Data.Maybe (isJust)
-import Data.Set qualified as Set
+import qualified Data.Set as Set
 import Types
 
 -- ANSI color codes
@@ -52,10 +52,7 @@ renderGame state = do
       mapLines =
         [ concat
             [ getCharForFogOfWar (Position x y) state currentVisible allExplored
-              | x <-
-                  [ 0
-                    .. dungeonWidth - 1
-                  ]
+              | x <- [0 .. dungeonWidth - 1]
             ]
             ++ clearRestOfLine
           | y <- [0 .. dungeonHeight - 1]
@@ -79,15 +76,17 @@ renderGame state = do
 getCharForFogOfWar :: Position -> GameState -> Set.Set Position -> Set.Set Position -> String
 getCharForFogOfWar pos state currentVisible allExplored
   | Set.member pos currentVisible =
-      if pos == playerPos state
-        then bold $ yellow "@"
-        else case find (\m -> mPos m == pos) (monsters state) of
-          Just monster -> getMonsterChar monster
-          Nothing -> case find (\i -> iPos i == pos) (items state) of
-            Just item -> getItemChar item
-            Nothing -> getTileChar (getTile (dungeon state) pos)
+      if pos == playerPos state then bold (yellow "@")
+      else case find (\m -> mPos m == pos) (monsters state) of
+        Just monster -> getMonsterChar monster
+        Nothing -> case find (\i -> iPos i == pos) (items state) of
+          Just item -> getItemChar item
+          Nothing -> getTileChar (getTile (dungeon state) pos)
   | Set.member pos allExplored =
-      dimmed (getTileChar (getTile (dungeon state) pos))
+      case getTile (dungeon state) pos of
+        Wall  -> "\ESC[38;5;240m#" ++ resetColor
+        Floor -> "\ESC[38;5;240m." ++ resetColor
+        Door  -> "\ESC[38;5;240m+" ++ resetColor
   | otherwise =
       " "
 
