@@ -10,6 +10,7 @@ module Types
   )
 where
 
+import Data.Set qualified as Set
 import System.Random (StdGen)
 
 -- Position in the dungeon
@@ -17,7 +18,7 @@ data Position = Position
   { x :: Int,
     y :: Int
   }
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 -- Tile types in the dungeon
 data Tile
@@ -61,7 +62,8 @@ data GameState = GameState
     items :: [Item],
     message :: String,
     gameOver :: Bool,
-    rng :: StdGen
+    rng :: StdGen,
+    exploredTiles :: Set.Set Position
   }
   deriving (Show)
 

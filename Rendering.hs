@@ -8,6 +8,7 @@ where
 
 import Data.List (find)
 import Data.Maybe (isJust)
+import Data.Set qualified as Set
 import Types
 
 -- ANSI color codes
@@ -27,6 +28,9 @@ brightRed s = "\ESC[91m" ++ s ++ resetColor
 bold :: String -> String
 bold s = "\ESC[1m" ++ s ++ resetColor
 
+dimmed :: String -> String
+dimmed s = "\ESC[90m" ++ s ++ resetColor
+
 -- Render the entire game state to the terminal
 renderGame :: GameState -> IO ()
 renderGame state = do
@@ -42,14 +46,24 @@ renderGame state = do
 
       separator = replicate dungeonWidth '-' ++ clearRestOfLine
 
+      currentVisible = getVisibleTiles state
+      allExplored = exploredTiles state
+
       mapLines =
-        [ concat [getCharAtPosition (Position x y) state | x <- [0 .. dungeonWidth - 1]] ++ clearRestOfLine
+        [ concat
+            [ getCharForFogOfWar (Position x y) state currentVisible allExplored
+              | x <-
+                  [ 0
+                    .. dungeonWidth - 1
+                  ]
+            ]
+            ++ clearRestOfLine
           | y <- [0 .. dungeonHeight - 1]
         ]
 
       msg = message state ++ clearRestOfLine
-      
-      footer = 
+
+      footer =
         if gameOver state
           then red "GAME OVER" ++ clearRestOfLine
           else bold "Controls: WASD to move, Q to quit" ++ clearRestOfLine
@@ -62,17 +76,20 @@ renderGame state = do
   putStr frame
 
 -- Determine what character to display at a position
-getCharAtPosition :: Position -> GameState -> String
-getCharAtPosition pos state
-  | pos == playerPos state = bold $ yellow "@"
-  | isJust monsterHere = getMonsterChar (fromJust monsterHere)
-  | isJust itemHere = getItemChar (fromJust itemHere)
-  | otherwise = getTileChar (getTile (dungeon state) pos)
-  where
-    monsterHere = find (\m -> mPos m == pos) (monsters state)
-    itemHere = find (\i -> iPos i == pos) (items state)
-    fromJust (Just x) = x
-    fromJust Nothing = error "fromJust: Nothing"
+getCharForFogOfWar :: Position -> GameState -> Set.Set Position -> Set.Set Position -> String
+getCharForFogOfWar pos state currentVisible allExplored
+  | Set.member pos currentVisible =
+      if pos == playerPos state
+        then bold $ yellow "@"
+        else case find (\m -> mPos m == pos) (monsters state) of
+          Just monster -> getMonsterChar monster
+          Nothing -> case find (\i -> iPos i == pos) (items state) of
+            Just item -> getItemChar item
+            Nothing -> getTileChar (getTile (dungeon state) pos)
+  | Set.member pos allExplored =
+      dimmed (getTileChar (getTile (dungeon state) pos))
+  | otherwise =
+      " "
 
 -- Get character representation for a monster (with color)
 getMonsterChar :: Monster -> String
@@ -100,6 +117,21 @@ getTile dungeon (Position px py)
   | py < 0 || py >= length dungeon = Wall
   | px < 0 || px >= length (head dungeon) = Wall
   | otherwise = dungeon !! py !! px
+
+-- Calculate currently visible tiles based on player position and radius
+getVisibleTiles :: GameState -> Set.Set Position
+getVisibleTiles state =
+  let px = x (playerPos state)
+      py = y (playerPos state)
+      radius = 5
+
+      visible =
+        [ Position (px + dx) (py + dy)
+          | dx <- [-radius .. radius],
+            dy <- [-radius .. radius],
+            (dx * dx + dy * dy) <= (radius * radius)
+        ]
+   in Set.fromList visible
 
 -- Clear the terminal screen
 clearScreen :: IO ()
