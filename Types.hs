@@ -5,6 +5,8 @@ module Types
     Monster (..),
     Item (..),
     GameState (..),
+    Screen (..),
+    App (..),
     dungeonWidth,
     dungeonHeight,
   )
@@ -64,6 +66,22 @@ data GameState = GameState
     gameOver :: Bool,
     rng :: StdGen,
     exploredTiles :: Set.Set Position
+  }
+  deriving (Show)
+
+-- Screen State
+data Screen
+  = MainMenu
+  | CharacterCreation
+  | Playing
+  | GameOverScreen
+  | Exit
+  deriving (Show, Eq)
+
+-- Top-level Application State
+data App = App
+  { currentScreen :: Screen,
+    gameState :: Maybe GameState
   }
   deriving (Show)
 

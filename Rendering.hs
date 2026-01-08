@@ -1,5 +1,5 @@
 module Rendering
-  ( renderGame,
+  ( renderApp, -- Renamed from renderGame
     clearScreen,
     hideCursor,
     showCursor,
@@ -7,8 +7,7 @@ module Rendering
 where
 
 import Data.List (find)
-import Data.Maybe (isJust)
-import qualified Data.Set as Set
+import Data.Set qualified as Set
 import Types
 
 -- ANSI color codes
@@ -31,7 +30,44 @@ bold s = "\ESC[1m" ++ s ++ resetColor
 dimmed :: String -> String
 dimmed s = "\ESC[90m" ++ s ++ resetColor
 
--- Render the entire game state to the terminal
+-- Top-level render function for the App
+renderApp :: App -> IO ()
+renderApp app = case currentScreen app of
+  MainMenu -> renderMainMenu
+  Playing -> case gameState app of
+    Just gs -> renderGame gs
+    Nothing -> putStrLn "Error: Playing state but no GameState!"
+  GameOverScreen -> renderGameOverScreen (gameState app)
+  CharacterCreation -> putStrLn "Character Creation (TODO)"
+  Exit -> return ()
+
+-- Render the Main Menu
+renderMainMenu :: IO ()
+renderMainMenu = do
+  clearScreen
+  putStrLn $ hideCursor ++ "\ESC[H"
+  putStrLn $ bold $ yellow "  ROGUELIKE HASKELL  "
+  putStrLn ""
+  putStrLn "  [n] New Game"
+  putStrLn "  [q] Quit"
+  putStrLn ""
+  putStrLn "  Select an option..."
+
+-- Render the Game Over Screen
+renderGameOverScreen :: Maybe GameState -> IO ()
+renderGameOverScreen maybeGs = do
+  clearScreen
+  putStrLn $ hideCursor ++ "\ESC[H"
+  putStrLn $ bold $ red "      GAME OVER      "
+  putStrLn ""
+  case maybeGs of
+    Just gs -> putStrLn $ "  You died." -- Depth stats can go here later
+    Nothing -> return ()
+  putStrLn ""
+  putStrLn "  [r] Restart"
+  putStrLn "  [q] Return to Main Menu"
+
+-- Render the dungeon simulation (Existing logic)
 renderGame :: GameState -> IO ()
 renderGame state = do
   let header =
@@ -60,10 +96,7 @@ renderGame state = do
 
       msg = message state ++ clearRestOfLine
 
-      footer =
-        if gameOver state
-          then red "GAME OVER" ++ clearRestOfLine
-          else bold "Controls: WASD to move, Q to quit" ++ clearRestOfLine
+      footer = bold "Controls: WASD to move, Q to quit" ++ clearRestOfLine
 
       frame =
         hideCursor
@@ -72,21 +105,22 @@ renderGame state = do
 
   putStr frame
 
--- Determine what character to display at a position
+-- Determine what character to display at a position (Fog of War)
 getCharForFogOfWar :: Position -> GameState -> Set.Set Position -> Set.Set Position -> String
 getCharForFogOfWar pos state currentVisible allExplored
   | Set.member pos currentVisible =
-      if pos == playerPos state then bold (yellow "@")
-      else case find (\m -> mPos m == pos) (monsters state) of
-        Just monster -> getMonsterChar monster
-        Nothing -> case find (\i -> iPos i == pos) (items state) of
-          Just item -> getItemChar item
-          Nothing -> getTileChar (getTile (dungeon state) pos)
+      if pos == playerPos state
+        then bold (yellow "@")
+        else case find (\m -> mPos m == pos) (monsters state) of
+          Just monster -> getMonsterChar monster
+          Nothing -> case find (\i -> iPos i == pos) (items state) of
+            Just item -> getItemChar item
+            Nothing -> getTileChar (getTile (dungeon state) pos)
   | Set.member pos allExplored =
       case getTile (dungeon state) pos of
-        Wall  -> "\ESC[38;5;240m#" ++ resetColor
+        Wall -> "\ESC[38;5;240m#" ++ resetColor
         Floor -> "\ESC[38;5;240m." ++ resetColor
-        Door  -> "\ESC[38;5;240m+" ++ resetColor
+        Door -> "\ESC[38;5;240m+" ++ resetColor
   | otherwise =
       " "
 

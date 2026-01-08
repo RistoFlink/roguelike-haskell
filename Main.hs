@@ -4,12 +4,16 @@ import Combat (movePlayer)
 import Data.Set qualified as Set
 import Dungeon (findEmptySpace, generateDungeon)
 import Entity (spawnItems, spawnMonsters)
-import Rendering (renderGame, showCursor)
+import Rendering (renderApp, showCursor)
 import System.IO (BufferMode (NoBuffering), hSetBuffering, hSetEcho, stdin, stdout)
 import System.Random (getStdGen)
 import Types
 
--- Initialize the game with a randomized world
+-- Initialize the top-level application
+initApp :: IO App
+initApp = return $ App {currentScreen = MainMenu, gameState = Nothing}
+
+-- Initialize a new game state (simulation)
 initGame :: IO GameState
 initGame = do
   gen <- getStdGen
@@ -26,54 +30,72 @@ initGame = do
         dungeon = dungeon',
         monsters = monsters',
         items = items',
-        message = "Welcome! Use WASD to move, Q to quit.",
+        message = "Welcome! Use WASD to move.",
         gameOver = False,
         rng = gen4,
         exploredTiles = Set.singleton playerPos'
       }
 
--- Main game loop
-gameLoop :: GameState -> IO ()
-gameLoop state = do
-  renderGame state
-  if gameOver state
-    then putStrLn $ "\nThanks for playing!" ++ showCursor
+-- Main application loop
+appLoop :: App -> IO ()
+appLoop app = do
+  if currentScreen app == Exit
+    then return () -- Stop the loop
     else do
+      renderApp app
       c <- getChar
-      let newState = handleInput c state
-      if gameOver newState
-        then do
-          renderGame newState
-          putStrLn $ "\nThanks for playing!" ++ showCursor
-        else gameLoop newState
+      newApp <- handleAppInput c app
+      appLoop newApp
 
--- Player input handling
-handleInput :: Char -> GameState -> GameState
-handleInput c state =
+-- Handle input at the application level
+handleAppInput :: Char -> App -> IO App
+handleAppInput c app = case currentScreen app of
+  MainMenu -> case c of
+    'n' -> do
+      initialGame <- initGame
+      return app {currentScreen = Playing, gameState = Just initialGame}
+    'q' -> return app {currentScreen = Exit} -- Quit the application
+    _ -> return app
+  Playing -> case gameState app of
+    Just gs -> do
+      let newGs = handleGameInput c gs
+      if gameOver newGs
+        then return app {currentScreen = GameOverScreen, gameState = Just newGs}
+        else return app {gameState = Just newGs}
+    Nothing -> return app -- Should not happen (or indicate an error)
+  GameOverScreen -> case c of
+    'r' -> do
+      initialGame <- initGame
+      return app {currentScreen = Playing, gameState = Just initialGame}
+    'q' -> return app {currentScreen = MainMenu, gameState = Nothing} -- Go back to main menu
+    _ -> return app -- Wait for input
+  CharacterCreation -> return app -- TODO (Placeholder for future functionality)
+
+-- Existing game input handling (pure)
+handleGameInput :: Char -> GameState -> GameState
+handleGameInput c state =
   let newState = case c of
         'w' -> movePlayer (Position (x (playerPos state)) (y (playerPos state) - 1)) state
         'a' -> movePlayer (Position (x (playerPos state) - 1) (y (playerPos state))) state
         's' -> movePlayer (Position (x (playerPos state)) (y (playerPos state) + 1)) state
         'd' -> movePlayer (Position (x (playerPos state) + 1) (y (playerPos state))) state
-        'q' -> state {gameOver = True}
+        'q' -> state {gameOver = True} -- This will trigger the transition to GameOverScreen in handleAppInput
         _ -> state
    in updateVisibility newState
 
+-- Update visibility (Fog of War)
 updateVisibility :: GameState -> GameState
 updateVisibility state =
   let px = x (playerPos state)
       py = y (playerPos state)
-      radius = 5
-
-      -- Generate all points within circle around the player
+      radius = 5 -- Visibility radius
       newVisible =
         [ Position (px + dx) (py + dy)
           | dx <- [-radius .. radius],
             dy <- [-radius .. radius],
-            dx * dx + dy * dy <= (radius * radius)
+            (dx * dx + dy * dy) <= (radius * radius)
         ]
 
-      -- Update the set
       newExplored = foldr Set.insert (exploredTiles state) newVisible
    in state {exploredTiles = newExplored}
 
@@ -83,5 +105,8 @@ main = do
   hSetBuffering stdin NoBuffering
   hSetBuffering stdout NoBuffering
   hSetEcho stdin False
-  initialState <- initGame
-  gameLoop initialState
+
+  initialApp <- initApp
+  appLoop initialApp
+
+  putStrLn $ "\nGoodbye!" ++ showCursor
