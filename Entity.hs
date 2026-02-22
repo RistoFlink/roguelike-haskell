@@ -8,6 +8,7 @@ where
 
 import Data.List (delete)
 import Dungeon (findEmptySpace, getTile)
+import Monsters (createMonster)
 import Stats
 import System.Random (StdGen, randomR)
 import Types
@@ -17,13 +18,9 @@ spawnMonsters :: [[Tile]] -> Int -> StdGen -> ([Monster], StdGen)
 spawnMonsters _ 0 gen = ([], gen)
 spawnMonsters dungeon n gen =
   let (pos, gen1) = findEmptySpace dungeon gen
-      (mType, gen2) = randomR (0, 1) gen1 :: (Int, StdGen)
-      monster =
-        Monster
-          pos
-          (if mType == 0 then Goblin else Orc)
-          baseStats
-          (if mType == 0 then 5 else 8)
+      (mTypeVal, gen2) = randomR (0, 1) gen1 :: (Int, StdGen)
+      mType = if mTypeVal == 0 then Goblin else Orc
+      monster = createMonster mType pos
       (rest, gen3) = spawnMonsters dungeon (n - 1) gen2
    in (monster : rest, gen3)
 
