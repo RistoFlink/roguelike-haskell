@@ -48,16 +48,11 @@ moveMonsters state =
           else ""
       isGameOver = newHealth <= 0
       currentMsg = message state
-      finalMsg =
-        if isGameOver
-          then "You died! Press Q to quit."
-          else
-            if null combatMsg
-              then currentMsg
-              else
-                if null currentMsg
-                  then combatMsg
-                  else currentMsg ++ " " ++ combatMsg
+      finalMsg
+        | isGameOver = "You died! Press Q to quit."
+        | null combatMsg = currentMsg
+        | null currentMsg = combatMsg
+        | otherwise = currentMsg ++ " " ++ combatMsg
    in state
         { monsters = movedMonsters,
           playerHealth = newHealth,
@@ -72,20 +67,18 @@ moveMonsters state =
 
 -- Move a single monster toward the player
 moveMonster :: GameState -> Monster -> (Monster, Bool)
-moveMonster state monster =
-  let Position mx my = mPos monster
-      Position px py = playerPos state
-      dx = signum (px - mx)
-      dy = signum (py - my)
-      newPos = Position (mx + dx) (my + dy)
-      isPlayerPos = newPos == playerPos state
-   in if isPlayerPos
-        then (monster, True)
-        else
-          if getTile (dungeon state) newPos == Floor
-            && not (any (\m -> mPos m == newPos) (monsters state))
-            then (monster {mPos = newPos}, False)
-            else (monster, False)
+moveMonster state monster
+  | isPlayerPos = (monster, True)
+  | isValidMove = (monster {mPos = newPos}, False)
+  | otherwise = (monster, False)
+  where
+    Position mx my = mPos monster
+    Position px py = playerPos state
+    newPos = Position (mx + signum (px - mx)) (my + signum (py - my))
+    isPlayerPos = newPos == playerPos state
+    isValidMove =
+      getTile (dungeon state) newPos == Floor
+        && not (any (\m -> mPos m == newPos) (monsters state))
 
 -- Pick up an item and apply its effect
 pickupItem :: Item -> GameState -> GameState

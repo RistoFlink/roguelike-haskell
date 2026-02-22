@@ -38,10 +38,9 @@ initGame = do
 
 -- Main application loop
 appLoop :: App -> IO ()
-appLoop app = do
-  if currentScreen app == Exit
-    then return () -- Stop the loop
-    else do
+appLoop app
+  | currentScreen app == Exit = return ()
+  | otherwise = do
       renderApp app
       c <- getChar
       newApp <- handleAppInput c app
