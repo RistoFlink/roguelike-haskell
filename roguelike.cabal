@@ -17,6 +17,7 @@ executable roguelike
     Dungeon
     Entity
     Rendering
+    Stats
     Types
 
   build-depends:

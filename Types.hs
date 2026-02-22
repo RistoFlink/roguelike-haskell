@@ -13,6 +13,7 @@ module Types
 where
 
 import Data.Set qualified as Set
+import Stats
 import System.Random (StdGen)
 
 -- Position in the dungeon
@@ -42,6 +43,7 @@ data Entity
 data Monster = Monster
   { mPos :: Position,
     mType :: Entity,
+    mStats :: Stats,
     mHealth :: Int
   }
   deriving (Eq, Show)
