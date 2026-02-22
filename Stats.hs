@@ -18,3 +18,13 @@ getModifier n = (n - 10) `div` 2
 
 baseStats :: Stats
 baseStats = Stats 10 10 10 10 10 10
+
+-- Armor class and attack bonuses
+getArmorClass :: Stats -> Int
+getArmorClass s = 10 + getModifier (dex s)
+
+getMeleeAttackBonus :: Stats -> Int
+getMeleeAttackBonus s = getModifier (str s)
+
+getMeleeDamageBonus :: Stats -> Int
+getMeleeDamageBonus s = getModifier (str s)
