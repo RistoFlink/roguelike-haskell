@@ -8,6 +8,7 @@ where
 
 import Data.List (delete)
 import Dungeon (findEmptySpace, getTile)
+import Stats
 import System.Random (StdGen, randomR)
 import Types
 
@@ -21,6 +22,7 @@ spawnMonsters dungeon n gen =
         Monster
           pos
           (if mType == 0 then Goblin else Orc)
+          baseStats
           (if mType == 0 then 5 else 8)
       (rest, gen3) = spawnMonsters dungeon (n - 1) gen2
    in (monster : rest, gen3)
@@ -52,11 +54,13 @@ moveMonsters state =
       finalMsg =
         if isGameOver
           then "You died! Press Q to quit."
-          else if null combatMsg
-            then currentMsg
-            else if null currentMsg
-              then combatMsg
-              else currentMsg ++ " " ++ combatMsg
+          else
+            if null combatMsg
+              then currentMsg
+              else
+                if null currentMsg
+                  then combatMsg
+                  else currentMsg ++ " " ++ combatMsg
    in state
         { monsters = movedMonsters,
           playerHealth = newHealth,
@@ -80,10 +84,11 @@ moveMonster state monster =
       isPlayerPos = newPos == playerPos state
    in if isPlayerPos
         then (monster, True)
-        else if getTile (dungeon state) newPos == Floor
-                && not (any (\m -> mPos m == newPos) (monsters state))
-                then (monster {mPos = newPos}, False)
-                else (monster, False)
+        else
+          if getTile (dungeon state) newPos == Floor
+            && not (any (\m -> mPos m == newPos) (monsters state))
+            then (monster {mPos = newPos}, False)
+            else (monster, False)
 
 -- Pick up an item and apply its effect
 pickupItem :: Item -> GameState -> GameState
