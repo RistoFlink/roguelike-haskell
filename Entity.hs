@@ -9,7 +9,6 @@ where
 import Data.List (delete)
 import Dungeon (findEmptySpace, getTile)
 import Monsters (createMonster)
-import Stats
 import System.Random (StdGen, randomR)
 import Types
 
