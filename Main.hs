@@ -69,6 +69,7 @@ handleAppInput c app = case currentScreen app of
     'q' -> return app {currentScreen = MainMenu, gameState = Nothing} -- Go back to main menu
     _ -> return app -- Wait for input
   CharacterCreation -> return app -- TODO (Placeholder for future functionality)
+  Exit -> return app
 
 -- Existing game input handling (pure)
 handleGameInput :: Char -> GameState -> GameState
