@@ -1,12 +1,7 @@
 module Ancestry where
 
 import Stats
-
-data Ancestry = Dwarf | Elf | Gnome | Goblin | Halfling | Human
-  deriving (Show, Eq)
-
-data Size = Tiny | Small | Medium | Large | Huge
-  deriving (Show, Eq)
+import Types
 
 -- Hit points
 getAncestryHP :: Ancestry -> Int
@@ -16,6 +11,7 @@ getAncestryHP Gnome = 8
 getAncestryHP Goblin = 6
 getAncestryHP Halfling = 6
 getAncestryHP Human = 8
+getAncestryHP Orc = 10
 
 -- Base speed TODO: what does this actually do?
 getAncestrySpeed :: Ancestry -> Int
@@ -25,6 +21,7 @@ getAncestrySpeed Gnome = 25
 getAncestrySpeed Goblin = 25
 getAncestrySpeed Halfling = 25
 getAncestrySpeed Human = 25
+getAncestrySpeed Orc = 25
 
 getAncestrySize :: Ancestry -> Size
 getAncestrySize Dwarf = Medium
@@ -33,6 +30,7 @@ getAncestrySize Gnome = Small
 getAncestrySize Goblin = Small
 getAncestrySize Halfling = Small
 getAncestrySize Human = Medium
+getAncestrySize Orc = Medium
 
 -- Apply the Boosts and Flaws for each Ancestry
 applyAncestryStats :: Ancestry -> Stats -> Stats
@@ -47,3 +45,5 @@ applyAncestryStats Goblin s =
 applyAncestryStats Halfling s =
   s {dex = dex s + 2, wis = wis s + 2, str = str s - 2}
 applyAncestryStats Human s = s
+applyAncestryStats Orc s =
+  s {str = str s + 2, con = con s + 2, int = int s - 2}

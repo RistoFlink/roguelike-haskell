@@ -127,8 +127,8 @@ getCharForFogOfWar pos state currentVisible allExplored
 -- Get character representation for a monster (with color)
 getMonsterChar :: Monster -> String
 getMonsterChar monster = case mType monster of
-  Goblin -> green "g"
-  Orc -> red "O"
+  Enemy Goblin -> green "g"
+  Enemy Orc -> red "O"
   _ -> "?"
 
 -- Get character representation for an item (with color)

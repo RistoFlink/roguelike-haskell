@@ -7,6 +7,8 @@ module Types
     GameState (..),
     Screen (..),
     App (..),
+    Ancestry (..),
+    Size (..),
     dungeonWidth,
     dungeonHeight,
   )
@@ -33,8 +35,7 @@ data Tile
 -- Type of entities (monsters, items, etc.)
 data Entity
   = Player
-  | Goblin
-  | Orc
+  | Enemy Ancestry
   | Potion
   | Sword
   deriving (Eq, Show)
@@ -86,6 +87,13 @@ data App = App
     gameState :: Maybe GameState
   }
   deriving (Show)
+
+-- Ancestry enums
+data Ancestry = Dwarf | Elf | Gnome | Goblin | Halfling | Human | Orc
+  deriving (Show, Eq)
+
+data Size = Tiny | Small | Medium | Large | Huge
+  deriving (Show, Eq)
 
 -- Constants
 dungeonWidth :: Int

@@ -13,6 +13,7 @@ executable roguelike
   import: warnings
   main-is: Main.hs
   other-modules:
+    Ancestry
     Combat
     Dungeon
     Entity
