@@ -95,6 +95,45 @@ data Ancestry = Dwarf | Elf | Gnome | Goblin | Halfling | Human | Orc
 data Size = Tiny | Small | Medium | Large | Huge
   deriving (Show, Eq)
 
+-- Background enums
+data Background
+  = Acolyte
+  | Acrobat
+  | AnimalWhisperer
+  | Artisan
+  | Artist
+  | Barkeep
+  | Barrister
+  | BountyHunter
+  | Charlatan
+  | Criminal
+  | Detective
+  | Emissary
+  | Entertainer
+  | Farmhand
+  | FieldMedic
+  | FortuneTeller
+  | Gambler
+  | Gladiator
+  | Guard
+  | Herbalist
+  | Hermit
+  | Hunter
+  | Laborer
+  | MartialDisciple
+  | Merchant
+  | Miner
+  | Noble
+  | Nomad
+  | Prisoner
+  | Sailor
+  | Scholar
+  | Scout
+  | StreetUrchin
+  | Tinker
+  | Warrior
+  deriving (Show, Eq)
+
 -- Constants
 dungeonWidth :: Int
 dungeonWidth = 50
