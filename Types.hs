@@ -8,6 +8,7 @@ module Types
     Screen (..),
     App (..),
     Ancestry (..),
+    Background (..),
     Size (..),
     dungeonWidth,
     dungeonHeight,
