@@ -9,6 +9,7 @@ module Types
     App (..),
     Ancestry (..),
     Background (..),
+    Class (..),
     Size (..),
     dungeonWidth,
     dungeonHeight,
@@ -133,6 +134,22 @@ data Background
   | StreetUrchin
   | Tinker
   | Warrior
+  deriving (Show, Eq)
+
+-- Class enums
+data Class
+  = Alchemist
+  | Barbarian
+  | Bard
+  | Champion
+  | Cleric
+  | Druid
+  | Fighter
+  | Monk
+  | Ranger
+  | Rogue
+  | Sorcerer
+  | Wizard
   deriving (Show, Eq)
 
 -- Constants

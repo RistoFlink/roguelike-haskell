@@ -15,6 +15,7 @@ executable roguelike
   other-modules:
     Ancestry
     Background
+    Class
     Combat
     Dungeon
     Entity
