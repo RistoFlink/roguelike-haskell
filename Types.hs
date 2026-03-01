@@ -101,7 +101,10 @@ data CreationState = CreationState
     chosenAncestry :: Maybe Ancestry,
     chosenBackground :: Maybe Background,
     chosenClass :: Maybe Class,
-    currentStats :: Stats
+    currentStats :: Stats,
+    selectedIndex :: Int,
+    currentPage :: Int,
+    selectedIndices :: [Int]
   }
   deriving (Show, Eq)
 

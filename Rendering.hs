@@ -6,6 +6,7 @@ module Rendering
   )
 where
 
+import Ancestry
 import Data.List (find)
 import Data.Set qualified as Set
 import Types
@@ -38,7 +39,9 @@ renderApp app = case currentScreen app of
     Just gs -> renderGame gs
     Nothing -> putStrLn "Error: Playing state but no GameState!"
   GameOverScreen -> renderGameOverScreen (gameState app)
-  CharacterCreation -> putStrLn "Character Creation (TODO)"
+  CharacterCreation -> case creation app of
+    Just cs -> renderCharacterCreation cs
+    Nothing -> putStrLn "Error: creation state but no CreationState"
   Exit -> return ()
 
 -- Render the Main Menu
@@ -66,6 +69,25 @@ renderGameOverScreen maybeGs = do
   putStrLn ""
   putStrLn "  [r] Restart"
   putStrLn "  [q] Return to Main Menu"
+
+-- Render the character creation menu
+renderCharacterCreation :: CreationState -> IO ()
+renderCharacterCreation cs = do
+  clearScreen
+  putStrLn $ hideCursor ++ "\ESC[H"
+  putStrLn $ bold $ yellow " CHARACTER CREATION "
+  putStrLn ""
+
+  case currentStep cs of
+    PickAncestry -> do
+      putStrLn " Pick your Ancestry:"
+      mapM_ (renderAncestryChoice (selectedIndex cs)) (zip [0 ..] playableAncestries)
+    _ -> putStrLn " Next step (TODO)"
+
+renderAncestryChoice :: Int -> (Int, Ancestry) -> IO ()
+renderAncestryChoice currentIdx (idx, anc) =
+  let highlight = if idx == currentIdx then bold (yellow "> ") else " "
+   in putStrLn $ highlight ++ show anc
 
 -- Render the dungeon simulation (Existing logic)
 renderGame :: GameState -> IO ()
@@ -168,7 +190,7 @@ getVisibleTiles state =
 
 -- Clear the terminal screen
 clearScreen :: IO ()
-clearScreen = putStr "\ESC[H"
+clearScreen = putStr "\ESC[2J\ESC[H"
 
 -- Clear the rest of the current line
 clearRestOfLine :: String

@@ -6,6 +6,7 @@ import Data.Set qualified as Set
 import Dungeon (findEmptySpace, generateDungeon)
 import Entity (spawnItems, spawnMonsters)
 import Rendering (renderApp, showCursor)
+import Stats (baseStats)
 import System.IO (BufferMode (NoBuffering), hSetBuffering, hSetEcho, stdin, stdout)
 import System.Random (getStdGen)
 import Types
@@ -51,9 +52,23 @@ appLoop app
 handleAppInput :: Char -> App -> IO App
 handleAppInput c app = case currentScreen app of
   MainMenu -> case c of
-    'n' -> do
-      initialGame <- initGame
-      return app {currentScreen = Playing, gameState = Just initialGame}
+    'n' ->
+      return
+        app
+          { currentScreen = CharacterCreation,
+            creation =
+              Just $
+                CreationState
+                  { currentStep = PickAncestry,
+                    chosenAncestry = Nothing,
+                    chosenBackground = Nothing,
+                    chosenClass = Nothing,
+                    currentStats = baseStats,
+                    selectedIndex = 0,
+                    currentPage = 0,
+                    selectedIndices = []
+                  }
+          }
     'q' -> return app {currentScreen = Exit} -- Quit the application
     _ -> return app
   Playing -> case gameState app of
@@ -90,14 +105,13 @@ handleGameInput c state =
 handleCreationInput :: Char -> CreationState -> App -> IO App
 handleCreationInput c cs app = case currentStep cs of
   PickAncestry -> case c of
-    '1' -> return app {creation = Just (selectAncestry Dwarf cs)}
-    '2' -> return app {creation = Just (selectAncestry Elf cs)}
-    '3' -> return app {creation = Just (selectAncestry Gnome cs)}
-    '4' -> return app {creation = Just (selectAncestry Goblin cs)}
-    '5' -> return app {creation = Just (selectAncestry Halfling cs)}
-    '6' -> return app {creation = Just (selectAncestry Human cs)}
-    '7' -> return app {creation = Just (selectAncestry Orc cs)}
+    'w' -> return app {creation = Just cs {selectedIndex = max 0 (selectedIndex cs - 1)}}
+    's' -> return app {creation = Just cs {selectedIndex = min (length playableAncestries - 1) (selectedIndex cs + 1)}}
+    '\n' ->
+      let selected = playableAncestries !! selectedIndex cs
+       in return app {creation = Just (selectAncestry selected cs {selectedIndex = 0})}
     _ -> return app
+  _ -> return app
   where
     selectAncestry anc state =
       state

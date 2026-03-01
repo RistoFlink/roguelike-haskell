@@ -3,6 +3,10 @@ module Ancestry where
 import Stats
 import Types
 
+-- Many ancestries, but only these are selectable by the player
+playableAncestries :: [Ancestry]
+playableAncestries = [Dwarf, Elf, Gnome, Goblin, Halfling, Human]
+
 -- Hit points
 getAncestryHP :: Ancestry -> Int
 getAncestryHP Dwarf = 10
