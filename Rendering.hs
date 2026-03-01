@@ -9,6 +9,7 @@ where
 import Ancestry
 import Data.List (find)
 import Data.Set qualified as Set
+import Stats
 import Types
 
 -- ANSI color codes
@@ -77,6 +78,25 @@ renderCharacterCreation cs = do
   putStrLn $ hideCursor ++ "\ESC[H"
   putStrLn $ bold $ yellow " CHARACTER CREATION "
   putStrLn ""
+
+  -- Sidebar to display stats
+  let renderSidebar stats = do
+        putStr "\ESC[2;30H" -- Move cursor to row 2, col 30
+        putStrLn $ bold $ cyan "  CURRENT STATS  "
+        putStr "\ESC[3;30H"
+        putStrLn $ "  Str: " ++ show (str stats)
+        putStr "\ESC[4;30H"
+        putStrLn $ "  Dex: " ++ show (dex stats)
+        putStr "\ESC[5;30H"
+        putStrLn $ "  Con: " ++ show (con stats)
+        putStr "\ESC[6;30H"
+        putStrLn $ "  Int: " ++ show (int stats)
+        putStr "\ESC[7;30H"
+        putStrLn $ "  Wis: " ++ show (wis stats)
+        putStr "\ESC[8;30H"
+        putStrLn $ "  Cha: " ++ show (cha stats)
+        putStr "\ESC[H" -- Reset cursor to top for the main menu
+  renderSidebar (currentStats cs)
 
   case currentStep cs of
     PickAncestry -> do
