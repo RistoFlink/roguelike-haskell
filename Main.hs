@@ -1,5 +1,6 @@
 module Main where
 
+import Ancestry
 import Combat (movePlayer)
 import Data.Set qualified as Set
 import Dungeon (findEmptySpace, generateDungeon)
@@ -11,7 +12,7 @@ import Types
 
 -- Initialize the top-level application
 initApp :: IO App
-initApp = return $ App {currentScreen = MainMenu, gameState = Nothing}
+initApp = return $ App {currentScreen = MainMenu, gameState = Nothing, creation = Nothing}
 
 -- Initialize a new game state (simulation)
 initGame :: IO GameState

@@ -11,6 +11,8 @@ module Types
     Background (..),
     Class (..),
     Size (..),
+    CreationState (..),
+    CreationStep (..),
     dungeonWidth,
     dungeonHeight,
   )
