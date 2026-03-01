@@ -83,10 +83,31 @@ data Screen
   | Exit
   deriving (Show, Eq)
 
+data CreationStep
+  = PickAncestry
+  | PickAncestryFreeBoost
+  | PickBackground
+  | PickBackgroundChoice
+  | PickBackgroundFreeBoost
+  | PickClass
+  | PickKeyAbility
+  | PickFinalBoosts [Ability]
+  deriving (Show, Eq)
+
+data CreationState = CreationState
+  { currentStep :: CreationStep,
+    chosenAncestry :: Maybe Ancestry,
+    chosenBackground :: Maybe Background,
+    chosenClass :: Maybe Class,
+    currentStats :: Stats
+  }
+  deriving (Show, Eq)
+
 -- Top-level Application State
 data App = App
   { currentScreen :: Screen,
-    gameState :: Maybe GameState
+    gameState :: Maybe GameState,
+    creation :: Maybe CreationState
   }
   deriving (Show)
 

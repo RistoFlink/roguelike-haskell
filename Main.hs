@@ -68,7 +68,9 @@ handleAppInput c app = case currentScreen app of
       return app {currentScreen = Playing, gameState = Just initialGame}
     'q' -> return app {currentScreen = MainMenu, gameState = Nothing} -- Go back to main menu
     _ -> return app -- Wait for input
-  CharacterCreation -> return app -- TODO (Placeholder for future functionality)
+  CharacterCreation -> case creation app of
+    Just cs -> handleCreationInput c cs app
+    Nothing -> return app
   Exit -> return app
 
 -- Existing game input handling (pure)
@@ -82,6 +84,26 @@ handleGameInput c state =
         'q' -> state {gameOver = True} -- This will trigger the transition to GameOverScreen in handleAppInput
         _ -> state
    in updateVisibility newState
+
+-- Handle the choices in character creation
+handleCreationInput :: Char -> CreationState -> App -> IO App
+handleCreationInput c cs app = case currentStep cs of
+  PickAncestry -> case c of
+    '1' -> return app {creation = Just (selectAncestry Dwarf cs)}
+    '2' -> return app {creation = Just (selectAncestry Elf cs)}
+    '3' -> return app {creation = Just (selectAncestry Gnome cs)}
+    '4' -> return app {creation = Just (selectAncestry Goblin cs)}
+    '5' -> return app {creation = Just (selectAncestry Halfling cs)}
+    '6' -> return app {creation = Just (selectAncestry Human cs)}
+    '7' -> return app {creation = Just (selectAncestry Orc cs)}
+    _ -> return app
+  where
+    selectAncestry anc state =
+      state
+        { chosenAncestry = Just anc,
+          currentStep = PickAncestryFreeBoost,
+          currentStats = applyAncestryStats anc (currentStats state)
+        }
 
 -- Update visibility (Fog of War)
 updateVisibility :: GameState -> GameState
