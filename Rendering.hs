@@ -96,7 +96,14 @@ renderCharacterCreation cs = do
         putStr "\ESC[8;30H"
         putStrLn $ "  Cha: " ++ show (cha stats)
         putStr "\ESC[H" -- Reset cursor to top for the main menu
-  renderSidebar (currentStats cs)
+
+  -- Calculate stat preview based on the highlight
+  let highlightedAncestry = playableAncestries !! selectedIndex cs
+      previewStats = case currentStep cs of
+        PickAncestry -> applyAncestryStats highlightedAncestry (currentStats cs)
+        _ -> currentStats cs
+
+  renderSidebar previewStats
 
   case currentStep cs of
     PickAncestry -> do
