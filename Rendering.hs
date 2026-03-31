@@ -75,46 +75,55 @@ renderGameOverScreen maybeGs = do
 renderCharacterCreation :: CreationState -> IO ()
 renderCharacterCreation cs = do
   clearScreen
-  putStrLn $ hideCursor ++ "\ESC[H"
-  putStrLn $ bold $ yellow " CHARACTER CREATION "
-  putStrLn ""
+  putStr $ hideCursor ++ "\ESC[H"
+  putStrLn $ bold (yellow " CHARACTER CREATION ") ++ clearRestOfLine
+  putStrLn clearRestOfLine
 
   -- Sidebar to display stats
   let renderSidebar stats = do
-        putStr "\ESC[2;30H" -- Move cursor to row 2, col 30
-        putStrLn $ bold $ cyan "  CURRENT STATS  "
-        putStr "\ESC[3;30H"
-        putStrLn $ "  Str: " ++ show (str stats)
-        putStr "\ESC[4;30H"
-        putStrLn $ "  Dex: " ++ show (dex stats)
-        putStr "\ESC[5;30H"
-        putStrLn $ "  Con: " ++ show (con stats)
-        putStr "\ESC[6;30H"
-        putStrLn $ "  Int: " ++ show (int stats)
-        putStr "\ESC[7;30H"
-        putStrLn $ "  Wis: " ++ show (wis stats)
-        putStr "\ESC[8;30H"
-        putStrLn $ "  Cha: " ++ show (cha stats)
-        putStr "\ESC[H" -- Reset cursor to top for the main menu
+        putStr "\ESC[3;40H" -- Move cursor to row 3, col 40
+        putStrLn $ bold $ cyan "  CURRENT STATS  " ++ clearRestOfLine
+        putStr "\ESC[4;40H"
+        putStrLn $ "  Str: " ++ show (str stats) ++ clearRestOfLine
+        putStr "\ESC[5;40H"
+        putStrLn $ "  Dex: " ++ show (dex stats) ++ clearRestOfLine
+        putStr "\ESC[6;40H"
+        putStrLn $ "  Con: " ++ show (con stats) ++ clearRestOfLine
+        putStr "\ESC[7;40H"
+        putStrLn $ "  Int: " ++ show (int stats) ++ clearRestOfLine
+        putStr "\ESC[8;40H"
+        putStrLn $ "  Wis: " ++ show (wis stats) ++ clearRestOfLine
+        putStr "\ESC[9;40H"
+        putStrLn $ "  Cha: " ++ show (cha stats) ++ clearRestOfLine
 
   -- Calculate stat preview based on the highlight
-  let highlightedAncestry = playableAncestries !! selectedIndex cs
-      previewStats = case currentStep cs of
-        PickAncestry -> applyAncestryStats highlightedAncestry (currentStats cs)
+  let previewStats = case currentStep cs of
+        PickAncestry ->
+          let highlighted = playableAncestries !! selectedIndex cs
+           in applyAncestryStats highlighted (currentStats cs)
         _ -> currentStats cs
+
+  -- Placeholder for the info box
+  putStr "\ESC[12;1H"
+  putStrLn $ replicate 60 '-' ++ clearRestOfLine
+  putStrLn $ " INFO: TO BE IMPLEMENTED" ++ clearRestOfLine
+  putStrLn $ replicate 60 '-' ++ clearRestOfLine
+
+  -- Move cursor back to line 3 for the list
+  putStr "\ESC[3;1H"
 
   renderSidebar previewStats
 
   case currentStep cs of
     PickAncestry -> do
-      putStrLn " Pick your Ancestry:"
+      putStrLn $ " Pick your Ancestry:" ++ clearRestOfLine
       mapM_ (renderAncestryChoice (selectedIndex cs)) (zip [0 ..] playableAncestries)
-    _ -> putStrLn " Next step (TODO)"
+    _ -> putStrLn $ " Next step (TODO)" ++ clearRestOfLine
 
 renderAncestryChoice :: Int -> (Int, Ancestry) -> IO ()
 renderAncestryChoice currentIdx (idx, anc) =
   let highlight = if idx == currentIdx then bold (yellow "> ") else " "
-   in putStrLn $ highlight ++ show anc
+   in putStrLn $ highlight ++ show anc ++ clearRestOfLine
 
 -- Render the dungeon simulation (Existing logic)
 renderGame :: GameState -> IO ()
