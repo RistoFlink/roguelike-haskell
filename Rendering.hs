@@ -112,13 +112,13 @@ renderCharacterCreation cs = do
   -- Move cursor back to line 3 for the list
   putStr "\ESC[3;1H"
 
-  renderSidebar previewStats
-
   case currentStep cs of
     PickAncestry -> do
       putStrLn $ " Pick your Ancestry:" ++ clearRestOfLine
       mapM_ (renderAncestryChoice (selectedIndex cs)) (zip [0 ..] playableAncestries)
     _ -> putStrLn $ " Next step (TODO)" ++ clearRestOfLine
+
+  renderSidebar previewStats
 
 renderAncestryChoice :: Int -> (Int, Ancestry) -> IO ()
 renderAncestryChoice currentIdx (idx, anc) =
