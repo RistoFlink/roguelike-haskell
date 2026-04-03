@@ -116,6 +116,10 @@ renderCharacterCreation cs = do
     PickAncestry -> do
       putStrLn $ " Pick your Ancestry:" ++ clearRestOfLine
       mapM_ (renderAncestryChoice (selectedIndex cs)) (zip [0 ..] playableAncestries)
+    PickAncestryFreeBoost -> do
+      putStrLn $ " Pick your Free Ancestry Boost:" ++ clearRestOfLine
+      let allAbilities = [Str .. Cha]
+      mapM_ (renderStatChoice (selectedIndex cs)) (zip [0 ..] allAbilities)
     _ -> putStrLn $ " Next step (TODO)" ++ clearRestOfLine
 
   renderSidebar previewStats
@@ -124,6 +128,11 @@ renderAncestryChoice :: Int -> (Int, Ancestry) -> IO ()
 renderAncestryChoice currentIdx (idx, anc) =
   let highlight = if idx == currentIdx then bold (yellow "> ") else " "
    in putStrLn $ highlight ++ show anc ++ clearRestOfLine
+
+renderStatChoice :: Int -> (Int, Ability) -> IO ()
+renderStatChoice currentIdx (idx, abil) =
+  let highlight = if idx == currentIdx then bold (yellow "> ") else " "
+   in putStrLn $ highlight ++ show abil ++ clearRestOfLine
 
 -- Render the dungeon simulation (Existing logic)
 renderGame :: GameState -> IO ()

@@ -6,7 +6,7 @@ import Data.Set qualified as Set
 import Dungeon (findEmptySpace, generateDungeon)
 import Entity (spawnItems, spawnMonsters)
 import Rendering (renderApp, showCursor)
-import Stats (baseStats)
+import Stats (Ability (..), applyBoost, baseStats)
 import System.IO (BufferMode (NoBuffering), hSetBuffering, hSetEcho, stdin, stdout)
 import System.Random (getStdGen)
 import Types
@@ -111,6 +111,14 @@ handleCreationInput c cs app = case currentStep cs of
       let selected = playableAncestries !! selectedIndex cs
        in return app {creation = Just (selectAncestry selected cs {selectedIndex = 0})}
     _ -> return app
+  PickAncestryFreeBoost -> case c of
+    'w' -> return app {creation = Just cs {selectedIndex = max 0 (selectedIndex cs - 1)}}
+    's' -> return app {creation = Just cs {selectedIndex = min 5 (selectedIndex cs + 1)}}
+    '\n' ->
+      let allAbilities = [Str .. Cha]
+          selectedAbil = allAbilities !! selectedIndex cs
+       in return app {creation = Just (selectFreeBoost selectedAbil cs {selectedIndex = 0})}
+    _ -> return app
   _ -> return app
   where
     selectAncestry anc state =
@@ -118,6 +126,11 @@ handleCreationInput c cs app = case currentStep cs of
         { chosenAncestry = Just anc,
           currentStep = PickAncestryFreeBoost,
           currentStats = applyAncestryStats anc (currentStats state)
+        }
+    selectFreeBoost abil state =
+      state
+        { currentStep = PickBackground,
+          currentStats = applyBoost abil (currentStats state)
         }
 
 -- Update visibility (Fog of War)
