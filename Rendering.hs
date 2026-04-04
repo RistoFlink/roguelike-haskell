@@ -7,6 +7,7 @@ module Rendering
 where
 
 import Ancestry
+import Background (displayBackground)
 import Data.List (find)
 import Data.Set qualified as Set
 import Stats
@@ -120,6 +121,14 @@ renderCharacterCreation cs = do
       putStrLn $ " Pick your Free Ancestry Boost:" ++ clearRestOfLine
       let allAbilities = [Str .. Cha]
       mapM_ (renderStatChoice (selectedIndex cs)) (zip [0 ..] allAbilities)
+    PickBackground -> do
+      let allBackgrounds = [minBound .. maxBound] :: [Background]
+          pageItems = take 10 . drop (currentPage cs * 10) $ allBackgrounds
+          maxPage = (length allBackgrounds - 1) `div` 10
+      putStrLn $ " Pick your Background (Page " ++ show (currentPage cs + 1) ++ "/" ++ show (maxPage + 1) ++ "):" ++ clearRestOfLine
+      mapM_ (renderBackgroundChoice (selectedIndex cs)) (zip [0 ..] pageItems)
+      putStrLn clearRestOfLine
+      putStrLn $ " [a] Previous Page  [d] Next Page" ++ clearRestOfLine
     _ -> putStrLn $ " Next step (TODO)" ++ clearRestOfLine
 
   renderSidebar previewStats
@@ -128,6 +137,11 @@ renderAncestryChoice :: Int -> (Int, Ancestry) -> IO ()
 renderAncestryChoice currentIdx (idx, anc) =
   let highlight = if idx == currentIdx then bold (yellow "> ") else " "
    in putStrLn $ highlight ++ show anc ++ clearRestOfLine
+
+renderBackgroundChoice :: Int -> (Int, Background) -> IO ()
+renderBackgroundChoice currentIdx (idx, bg) =
+  let highlight = if idx == currentIdx then bold (yellow "> ") else " "
+   in putStrLn $ highlight ++ displayBackground bg ++ clearRestOfLine
 
 renderStatChoice :: Int -> (Int, Ability) -> IO ()
 renderStatChoice currentIdx (idx, abil) =

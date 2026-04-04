@@ -160,7 +160,7 @@ data Background
   | StreetUrchin
   | Tinker
   | Warrior
-  deriving (Show, Eq)
+  deriving (Show, Eq, Enum, Bounded)
 
 -- Class enums
 data Class

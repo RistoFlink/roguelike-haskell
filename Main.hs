@@ -119,6 +119,20 @@ handleCreationInput c cs app = case currentStep cs of
           selectedAbil = allAbilities !! selectedIndex cs
        in return app {creation = Just (selectFreeBoost selectedAbil cs {selectedIndex = 0})}
     _ -> return app
+  PickBackground -> case c of
+    'w' -> return app {creation = Just cs {selectedIndex = max 0 (selectedIndex cs - 1)}}
+    's' ->
+      let itemsOnPage = min 10 (length allBackgrounds - (currentPage cs * 10))
+       in return app {creation = Just cs {selectedIndex = min (itemsOnPage - 1) (selectedIndex cs + 1)}}
+    'a' -> return app {creation = Just cs {currentPage = max 0 (currentPage cs - 1), selectedIndex = 0}}
+    'd' ->
+      let maxPage = (length allBackgrounds - 1) `div` 10
+       in return app {creation = Just cs {currentPage = min maxPage (currentPage cs + 1), selectedIndex = 0}}
+    '\n' ->
+      let absoluteIndex = (currentPage cs * 10) + selectedIndex cs
+          selectedBg = allBackgrounds !! absoluteIndex
+       in return app {creation = Just (selectBackground selectedBg cs {selectedIndex = 0, currentPage = 0})}
+    _ -> return app
   _ -> return app
   where
     selectAncestry anc state =
@@ -131,6 +145,13 @@ handleCreationInput c cs app = case currentStep cs of
       state
         { currentStep = PickBackground,
           currentStats = applyBoost abil (currentStats state)
+        }
+    allBackgrounds = [minBound .. maxBound] :: [Background]
+
+    selectBackground bg state =
+      state
+        { chosenBackground = Just bg,
+          currentStep = PickClass
         }
 
 -- Update visibility (Fog of War)
