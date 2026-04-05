@@ -127,10 +127,15 @@ handleCreationInput c cs app = case currentStep cs of
     's' ->
       let itemsOnPage = min 10 (length allBackgrounds - (currentPage cs * 10))
        in return app {creation = Just cs {selectedIndex = min (itemsOnPage - 1) (selectedIndex cs + 1)}}
-    'a' -> return app {creation = Just cs {currentPage = max 0 (currentPage cs - 1), selectedIndex = 0}}
+    'a' ->
+      let newPage = max 0 (currentPage cs - 1)
+          itemsOnNewPage = min 10 (length allBackgrounds - (newPage * 10))
+       in return app {creation = Just cs {currentPage = newPage, selectedIndex = min (selectedIndex cs) (itemsOnNewPage - 1)}}
     'd' ->
       let maxPage = (length allBackgrounds - 1) `div` 10
-       in return app {creation = Just cs {currentPage = min maxPage (currentPage cs + 1), selectedIndex = 0}}
+          newPage = min maxPage (currentPage cs + 1)
+          itemsOnNewPage = min 10 (length allBackgrounds - (newPage * 10))
+       in return app {creation = Just cs {currentPage = newPage, selectedIndex = min (selectedIndex cs) (itemsOnNewPage - 1)}}
     '\n' ->
       let absoluteIndex = (currentPage cs * 10) + selectedIndex cs
           selectedBg = allBackgrounds !! absoluteIndex
@@ -161,10 +166,15 @@ handleCreationInput c cs app = case currentStep cs of
     's' ->
       let itemsOnPage = min 10 (length allClasses - (currentPage cs * 10))
        in return app {creation = Just cs {selectedIndex = min (itemsOnPage - 1) (selectedIndex cs + 1)}}
-    'a' -> return app {creation = Just cs {currentPage = max 0 (currentPage cs - 1), selectedIndex = 0}}
+    'a' ->
+      let newPage = max 0 (currentPage cs - 1)
+          itemsOnNewPage = min 10 (length allClasses - (newPage * 10))
+       in return app {creation = Just cs {currentPage = newPage, selectedIndex = min (selectedIndex cs) (itemsOnNewPage - 1)}}
     'd' ->
       let maxPage = (length allClasses - 1) `div` 10
-       in return app {creation = Just cs {currentPage = min maxPage (currentPage cs + 1), selectedIndex = 0}}
+          newPage = min maxPage (currentPage cs + 1)
+          itemsOnNewPage = min 10 (length allClasses - (newPage * 10))
+       in return app {creation = Just cs {currentPage = newPage, selectedIndex = min (selectedIndex cs) (itemsOnNewPage - 1)}}
     '\n' ->
       let absoluteIndex = (currentPage cs * 10) + selectedIndex cs
           selectedClass = allClasses !! absoluteIndex
