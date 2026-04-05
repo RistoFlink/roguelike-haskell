@@ -1,15 +1,15 @@
 module Main where
 
 import Ancestry
-import Background (BackgroundBoosts (..), displayBackground, getBackgroundBoosts)
-import Class (getKeyAbilityOptions)
+import Background (BackgroundBoosts (..), getBackgroundBoosts)
+import Class (getClassHP, getKeyAbilityOptions)
 import Combat (movePlayer)
 import Data.Maybe (fromJust)
 import Data.Set qualified as Set
 import Dungeon (findEmptySpace, generateDungeon)
 import Entity (spawnItems, spawnMonsters)
 import Rendering (renderApp, showCursor)
-import Stats (Ability (..), applyBoost, baseStats)
+import Stats (Ability (..), Stats (..), applyBoost, baseStats)
 import System.IO (BufferMode (NoBuffering), hSetBuffering, hSetEcho, stdin, stdout)
 import System.Random (getStdGen)
 import Types
@@ -19,19 +19,32 @@ initApp :: IO App
 initApp = return $ App {currentScreen = MainMenu, gameState = Nothing, creation = Nothing}
 
 -- Initialize a new game state (simulation)
-initGame :: IO GameState
-initGame = do
+initGame :: Ancestry -> Class -> Stats -> IO GameState
+initGame anc cls finalStats = do
   gen <- getStdGen
   let (dungeon', gen1) = generateDungeon gen
       (playerPos', gen2) = findEmptySpace dungeon' gen1
       (monsters', gen3) = spawnMonsters dungeon' 8 gen2
       (items', gen4) = spawnItems dungeon' 5 gen3
+
+      -- PF2e lvl 1 calculations
+      conMod = (con finalStats - 10) `div` 2
+      strMod = (str finalStats - 10) `div` 2
+      dexMod = (dex finalStats - 10) `div` 2
+
+      hp = getAncestryHP anc + getClassHP cls + conMod
+      atk = strMod + 3
+      ac = 10 + dexMod + 3
+
+      cStats = CombatStats {maxHP = hp, meleeAttack = atk, armorClass = ac}
   return
     GameState
       { playerPos = playerPos',
-        playerHealth = 20,
-        playerMaxHealth = 20,
-        playerAttack = 3,
+        playerHealth = hp,
+        playerStats = finalStats,
+        playerCombatStats = cStats,
+        playerAncestry = anc,
+        playerClass = cls,
         dungeon = dungeon',
         monsters = monsters',
         items = items',
@@ -82,9 +95,11 @@ handleAppInput c app = case currentScreen app of
         else return app {gameState = Just newGs}
     Nothing -> return app -- Should not happen (or indicate an error)
   GameOverScreen -> case c of
-    'r' -> do
-      initialGame <- initGame
-      return app {currentScreen = Playing, gameState = Just initialGame}
+    'r' -> case gameState app of
+      Just gs -> do
+        initialGame <- initGame (playerAncestry gs) (playerClass gs) (playerStats gs)
+        return app {currentScreen = Playing, gameState = Just initialGame}
+      Nothing -> return app
     'q' -> return app {currentScreen = MainMenu, gameState = Nothing} -- Go back to main menu
     _ -> return app -- Wait for input
   CharacterCreation -> case creation app of
@@ -192,7 +207,30 @@ handleCreationInput c cs app = case currentStep cs of
           selectedAbil = options !! selectedIndex cs
        in return app {creation = Just (selectKeyAbility selectedAbil cs {selectedIndex = 0})}
     _ -> return app
-  _ -> return app
+  PickFinalBoosts chosenBoosts -> case c of
+    'w' -> return app {creation = Just cs {selectedIndex = max 0 (selectedIndex cs - 1)}}
+    's' -> return app {creation = Just cs {selectedIndex = min 5 (selectedIndex cs + 1)}}
+    ' ' ->
+      let allAbilities = [Str .. Cha]
+          abil = allAbilities !! selectedIndex cs
+          -- PF2e rule: 4 different stat boosts
+          newBoosts
+            | abil `elem` chosenBoosts = filter (/= abil) chosenBoosts
+            | length chosenBoosts < 4 = abil : chosenBoosts
+            | otherwise = chosenBoosts
+       in return app {creation = Just cs {currentStep = PickFinalBoosts newBoosts}}
+    '\n' ->
+      if length chosenBoosts == 4
+        then do
+          let finalStats = foldr applyBoost (currentStats cs) chosenBoosts
+          initialGame <-
+            initGame
+              (fromJust $ chosenAncestry cs)
+              (fromJust $ chosenClass cs)
+              finalStats
+          return app {currentScreen = Playing, gameState = Just initialGame, creation = Nothing}
+        else return app
+    _ -> return app
   where
     selectAncestry anc state =
       state

@@ -11,6 +11,7 @@ module Types
     Background (..),
     Class (..),
     Size (..),
+    CombatStats (..),
     CreationState (..),
     CreationStep (..),
     dungeonWidth,
@@ -64,8 +65,10 @@ data Item = Item
 data GameState = GameState
   { playerPos :: Position,
     playerHealth :: Int,
-    playerMaxHealth :: Int,
-    playerAttack :: Int,
+    playerStats :: Stats,
+    playerCombatStats :: CombatStats,
+    playerAncestry :: Ancestry,
+    playerClass :: Class,
     dungeon :: [[Tile]],
     monsters :: [Monster],
     items :: [Item],
@@ -177,6 +180,13 @@ data Class
   | Sorcerer
   | Wizard
   deriving (Show, Eq, Enum, Bounded)
+
+data CombatStats = CombatStats
+  { maxHP :: Int,
+    meleeAttack :: Int,
+    armorClass :: Int
+  }
+  deriving (Show, Eq)
 
 -- Constants
 dungeonWidth :: Int

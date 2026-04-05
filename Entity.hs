@@ -84,15 +84,19 @@ pickupItem :: Item -> GameState -> GameState
 pickupItem item state =
   case iType item of
     Potion ->
-      state
-        { items = delete item (items state),
-          playerHealth = min (playerMaxHealth state) (playerHealth state + 10),
-          message = "You drank a healing potion! (Recovered 10 HP)"
-        }
+      let cStats = playerCombatStats state
+          newHP = min (maxHP cStats) (playerHealth state + 10)
+       in state
+            { items = delete item (items state),
+              playerHealth = newHP,
+              message = "You drank a healing potion! (Recovered 10 HP)"
+            }
     Sword ->
-      state
-        { items = delete item (items state),
-          playerAttack = playerAttack state + 2,
-          message = "You found a rusty sword! (+2 attack)"
-        }
+      let cStats = playerCombatStats state
+          newCStats = cStats {meleeAttack = meleeAttack cStats + 2}
+       in state
+            { items = delete item (items state),
+              playerCombatStats = newCStats,
+              message = "You found a rusty sword! (+2 attack)"
+            }
     _ -> state

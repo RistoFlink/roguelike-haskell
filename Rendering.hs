@@ -19,12 +19,12 @@ import Types
 resetColor :: String
 resetColor = "\ESC[0m"
 
-red, green, yellow, blue, magenta, cyan, white, brightRed :: String -> String
+red, green, yellow, blue, cyan, white, brightRed :: String -> String
 red s = "\ESC[31m" ++ s ++ resetColor
 green s = "\ESC[32m" ++ s ++ resetColor
 yellow s = "\ESC[33m" ++ s ++ resetColor
 blue s = "\ESC[34m" ++ s ++ resetColor
-magenta s = "\ESC[35m" ++ s ++ resetColor
+-- magenta s = "\ESC[35m" ++ s ++ resetColor
 cyan s = "\ESC[36m" ++ s ++ resetColor
 white s = "\ESC[37m" ++ s ++ resetColor
 brightRed s = "\ESC[91m" ++ s ++ resetColor
@@ -32,8 +32,8 @@ brightRed s = "\ESC[91m" ++ s ++ resetColor
 bold :: String -> String
 bold s = "\ESC[1m" ++ s ++ resetColor
 
-dimmed :: String -> String
-dimmed s = "\ESC[90m" ++ s ++ resetColor
+-- dimmed :: String -> String
+-- dimmed s = "\ESC[90m" ++ s ++ resetColor
 
 -- Top-level render function for the App
 renderApp :: App -> IO ()
@@ -122,6 +122,13 @@ renderCharacterCreation cs = do
               options = getKeyAbilityOptions currentCls
               highlightedAbil = options !! selectedIndex cs
            in applyBoost highlightedAbil (currentStats cs)
+        PickFinalBoosts chosenBoosts ->
+          let allAbilities = [Str .. Cha]
+              highlightedAbil = allAbilities !! selectedIndex cs
+              baseWithChosen = foldr applyBoost (currentStats cs) chosenBoosts
+           in if highlightedAbil `elem` chosenBoosts
+                then baseWithChosen
+                else applyBoost highlightedAbil baseWithChosen
         _ -> currentStats cs
 
   -- Placeholder for the info box
@@ -171,7 +178,21 @@ renderCharacterCreation cs = do
       let currentCls = fromJust (chosenClass cs)
           options = getKeyAbilityOptions currentCls
       mapM_ (renderStatChoice (selectedIndex cs)) (zip [0 ..] options)
-    _ -> putStrLn $ " Next step (TODO)" ++ clearRestOfLine
+    PickFinalBoosts chosenBoosts -> do
+      putStrLn $ " Final Attribute Boosts (" ++ show (length chosenBoosts) ++ "/4" ++ clearRestOfLine
+      putStrLn $ " Choose 4 different attributes to increase by +2." ++ clearRestOfLine
+      let allAbilities = [Str .. Cha]
+      mapM_
+        ( \(idx, abil) -> do
+            let isSelected = abil `elem` chosenBoosts
+                isHighlighted = idx == selectedIndex cs
+                prefix = if isHighlighted then bold (yellow "> ") else " "
+                checkbox = if isSelected then "[x] " else "[ ] "
+            putStrLn $ prefix ++ checkbox ++ show abil ++ clearRestOfLine
+        )
+        (zip [0 ..] allAbilities)
+      putStrLn ""
+      putStrLn $ (if length chosenBoosts == 4 then green else white) "[Space] Toggle selection  [Enter] Finalize Character" ++ clearRestOfLine
 
   renderSidebar previewStats
 
@@ -198,12 +219,13 @@ renderStatChoice currentIdx (idx, abil) =
 -- Render the dungeon simulation (Existing logic)
 renderGame :: GameState -> IO ()
 renderGame state = do
-  let header =
+  let cStats = playerCombatStats state
+      header =
         bold "HP: "
           ++ (if playerHealth state < 5 then brightRed else green)
-            (show (playerHealth state) ++ "/" ++ show (playerMaxHealth state))
+            (show (playerHealth state) ++ "/" ++ show (maxHP cStats))
           ++ bold " | ATK: "
-          ++ cyan (show (playerAttack state))
+          ++ cyan (show (meleeAttack cStats))
           ++ bold " | Monsters: "
           ++ red (show (length $ monsters state))
           ++ clearRestOfLine

@@ -31,11 +31,11 @@ movePlayer newPos state
 attackMonster :: Monster -> GameState -> GameState
 attackMonster monster state =
   let (attackRoll, gen1) = randomR (1, 20) (rng state)
-      -- TODO: update player stat handling and then change this
-      pStats = baseStats {str = 14, dex = 12}
+      pStats = playerStats state
+      cStats = playerCombatStats state
       mStats' = mStats monster
 
-      attackBonus = getMeleeAttackBonus pStats
+      attackBonus = meleeAttack cStats
       totalAttack = attackRoll + attackBonus
       targetArmorClass = getArmorClass mStats'
 
@@ -43,7 +43,6 @@ attackMonster monster state =
       isCrit = attackRoll == 20 || totalAttack >= targetArmorClass + 10
       isHit = attackRoll /= 1 && (totalAttack >= targetArmorClass || isCrit)
 
-      -- TODO: placeholder 1d6 weapon
       (damageRoll, finalGenerator) = randomR (1, 6) gen1
       baseDamage = damageRoll + getMeleeDamageBonus pStats
       finalDamage = if isCrit then baseDamage * 2 else baseDamage
