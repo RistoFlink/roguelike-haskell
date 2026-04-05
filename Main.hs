@@ -1,7 +1,9 @@
 module Main where
 
 import Ancestry
+import Class (getKeyAbilityOptions)
 import Combat (movePlayer)
+import Data.Maybe (fromJust)
 import Data.Set qualified as Set
 import Dungeon (findEmptySpace, generateDungeon)
 import Entity (spawnItems, spawnMonsters)
@@ -147,6 +149,18 @@ handleCreationInput c cs app = case currentStep cs of
           selectedClass = allClasses !! absoluteIndex
        in return app {creation = Just (selectClass selectedClass cs {selectedIndex = 0, currentPage = 0})}
     _ -> return app
+  PickKeyAbility -> case c of
+    'w' -> return app {creation = Just cs {selectedIndex = max 0 (selectedIndex cs - 1)}}
+    's' ->
+      let currentCls = fromJust (chosenClass cs)
+          options = getKeyAbilityOptions currentCls
+       in return app {creation = Just cs {selectedIndex = min (length options - 1) (selectedIndex cs + 1)}}
+    '\n' ->
+      let currentCls = fromJust (chosenClass cs)
+          options = getKeyAbilityOptions currentCls
+          selectedAbil = options !! selectedIndex cs
+       in return app {creation = Just (selectKeyAbility selectedAbil cs {selectedIndex = 0})}
+    _ -> return app
   _ -> return app
   where
     selectAncestry anc state =
@@ -174,6 +188,12 @@ handleCreationInput c cs app = case currentStep cs of
       state
         { chosenClass = Just cls,
           currentStep = PickKeyAbility
+        }
+
+    selectKeyAbility abil state =
+      state
+        { currentStep = PickFinalBoosts [],
+          currentStats = applyBoost abil (currentStats state)
         }
 
 -- Update visibility (Fog of War)

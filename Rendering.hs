@@ -8,7 +8,9 @@ where
 
 import Ancestry
 import Background (displayBackground)
+import Class (getKeyAbilityOptions)
 import Data.List (find)
+import Data.Maybe (fromJust)
 import Data.Set qualified as Set
 import Stats
 import Types
@@ -137,6 +139,11 @@ renderCharacterCreation cs = do
       mapM_ (renderClassChoice (selectedIndex cs)) (zip [0 ..] pageItems)
       putStrLn ""
       putStrLn $ " [a] Previous Page [d] Next Page"
+    PickKeyAbility -> do
+      putStrLn $ " Pick your Class Key Ability:" ++ clearRestOfLine
+      let currentCls = fromJust (chosenClass cs)
+          options = getKeyAbilityOptions currentCls
+      mapM_ (renderStatChoice (selectedIndex cs)) (zip [0 ..] options)
     _ -> putStrLn $ " Next step (TODO)" ++ clearRestOfLine
 
   renderSidebar previewStats
