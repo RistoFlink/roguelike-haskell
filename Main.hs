@@ -133,6 +133,20 @@ handleCreationInput c cs app = case currentStep cs of
           selectedBg = allBackgrounds !! absoluteIndex
        in return app {creation = Just (selectBackground selectedBg cs {selectedIndex = 0, currentPage = 0})}
     _ -> return app
+  PickClass -> case c of
+    'w' -> return app {creation = Just cs {selectedIndex = max 0 (selectedIndex cs - 1)}}
+    's' ->
+      let itemsOnPage = min 10 (length allClasses - (currentPage cs * 10))
+       in return app {creation = Just cs {selectedIndex = min (itemsOnPage - 1) (selectedIndex cs + 1)}}
+    'a' -> return app {creation = Just cs {currentPage = max 0 (currentPage cs - 1), selectedIndex = 0}}
+    'd' ->
+      let maxPage = (length allClasses - 1) `div` 10
+       in return app {creation = Just cs {currentPage = min maxPage (currentPage cs + 1), selectedIndex = 0}}
+    '\n' ->
+      let absoluteIndex = (currentPage cs * 10) + selectedIndex cs
+          selectedClass = allClasses !! absoluteIndex
+       in return app {creation = Just (selectClass selectedClass cs {selectedIndex = 0, currentPage = 0})}
+    _ -> return app
   _ -> return app
   where
     selectAncestry anc state =
@@ -152,6 +166,14 @@ handleCreationInput c cs app = case currentStep cs of
       state
         { chosenBackground = Just bg,
           currentStep = PickClass
+        }
+
+    allClasses = [minBound .. maxBound] :: [Class]
+
+    selectClass cls state =
+      state
+        { chosenClass = Just cls,
+          currentStep = PickKeyAbility
         }
 
 -- Update visibility (Fog of War)

@@ -176,7 +176,7 @@ data Class
   | Rogue
   | Sorcerer
   | Wizard
-  deriving (Show, Eq)
+  deriving (Show, Eq, Enum, Bounded)
 
 -- Constants
 dungeonWidth :: Int

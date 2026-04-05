@@ -105,7 +105,7 @@ renderCharacterCreation cs = do
         _ -> currentStats cs
 
   -- Placeholder for the info box
-  putStr "\ESC[12;1H"
+  putStr "\ESC[18;1H"
   putStrLn $ replicate 60 '-' ++ clearRestOfLine
   putStrLn $ " INFO: TO BE IMPLEMENTED" ++ clearRestOfLine
   putStrLn $ replicate 60 '-' ++ clearRestOfLine
@@ -129,6 +129,14 @@ renderCharacterCreation cs = do
       mapM_ (renderBackgroundChoice (selectedIndex cs)) (zip [0 ..] pageItems)
       putStrLn clearRestOfLine
       putStrLn $ " [a] Previous Page  [d] Next Page" ++ clearRestOfLine
+    PickClass -> do
+      let allClasses = [minBound .. maxBound] :: [Class]
+          pageItems = take 10 . drop (currentPage cs * 10) $ allClasses
+          maxPage = (length allClasses - 1) `div` 10
+      putStrLn $ " Pick your Class (Page " ++ show (currentPage cs + 1) ++ "/" ++ show (maxPage + 1) ++ "):"
+      mapM_ (renderClassChoice (selectedIndex cs)) (zip [0 ..] pageItems)
+      putStrLn ""
+      putStrLn $ " [a] Previous Page [d] Next Page"
     _ -> putStrLn $ " Next step (TODO)" ++ clearRestOfLine
 
   renderSidebar previewStats
@@ -142,6 +150,11 @@ renderBackgroundChoice :: Int -> (Int, Background) -> IO ()
 renderBackgroundChoice currentIdx (idx, bg) =
   let highlight = if idx == currentIdx then bold (yellow "> ") else " "
    in putStrLn $ highlight ++ displayBackground bg ++ clearRestOfLine
+
+renderClassChoice :: Int -> (Int, Class) -> IO ()
+renderClassChoice currentIdx (idx, cls) =
+  let highlight = if idx == currentIdx then bold (yellow "> ") else " "
+   in putStrLn $ highlight ++ show cls
 
 renderStatChoice :: Int -> (Int, Ability) -> IO ()
 renderStatChoice currentIdx (idx, abil) =
