@@ -1,6 +1,7 @@
 module Main where
 
 import Ancestry
+import Background (BackgroundBoosts (..), displayBackground, getBackgroundBoosts)
 import Class (getKeyAbilityOptions)
 import Combat (movePlayer)
 import Data.Maybe (fromJust)
@@ -135,6 +136,26 @@ handleCreationInput c cs app = case currentStep cs of
           selectedBg = allBackgrounds !! absoluteIndex
        in return app {creation = Just (selectBackground selectedBg cs {selectedIndex = 0, currentPage = 0})}
     _ -> return app
+  PickBackgroundChoice -> case c of
+    'w' -> return app {creation = Just cs {selectedIndex = max 0 (selectedIndex cs - 1)}}
+    's' ->
+      let currentBg = fromJust (chosenBackground cs)
+          options = choices (getBackgroundBoosts currentBg)
+       in return app {creation = Just cs {selectedIndex = min (length options - 1) (selectedIndex cs + 1)}}
+    '\n' ->
+      let currentBg = fromJust (chosenBackground cs)
+          options = choices (getBackgroundBoosts currentBg)
+          selectedAbil = options !! selectedIndex cs
+       in return app {creation = Just (selectBackgroundChoice selectedAbil cs {selectedIndex = 0})}
+    _ -> return app
+  PickBackgroundFreeBoost -> case c of
+    'w' -> return app {creation = Just cs {selectedIndex = max 0 (selectedIndex cs - 1)}}
+    's' -> return app {creation = Just cs {selectedIndex = min 5 (selectedIndex cs + 1)}}
+    '\n' ->
+      let allAbilities = [Str .. Cha]
+          selectedAbil = allAbilities !! selectedIndex cs
+       in return app {creation = Just (selectBackgroundFree selectedAbil cs {selectedIndex = 0})}
+    _ -> return app
   PickClass -> case c of
     'w' -> return app {creation = Just cs {selectedIndex = max 0 (selectedIndex cs - 1)}}
     's' ->
@@ -179,7 +200,19 @@ handleCreationInput c cs app = case currentStep cs of
     selectBackground bg state =
       state
         { chosenBackground = Just bg,
-          currentStep = PickClass
+          currentStep = PickBackgroundChoice
+        }
+
+    selectBackgroundChoice abil state =
+      state
+        { currentStep = PickBackgroundFreeBoost,
+          currentStats = applyBoost abil (currentStats state)
+        }
+
+    selectBackgroundFree abil state =
+      state
+        { currentStep = PickClass,
+          currentStats = applyBoost abil (currentStats state)
         }
 
     allClasses = [minBound .. maxBound] :: [Class]

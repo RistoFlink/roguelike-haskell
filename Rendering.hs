@@ -7,7 +7,7 @@ module Rendering
 where
 
 import Ancestry
-import Background (displayBackground)
+import Background (BackgroundBoosts (..), displayBackground, getBackgroundBoosts)
 import Class (getKeyAbilityOptions)
 import Data.List (find)
 import Data.Maybe (fromJust)
@@ -104,6 +104,24 @@ renderCharacterCreation cs = do
         PickAncestry ->
           let highlighted = playableAncestries !! selectedIndex cs
            in applyAncestryStats highlighted (currentStats cs)
+        PickAncestryFreeBoost ->
+          let allAbilities = [Str .. Cha]
+              highlightedAbil = allAbilities !! selectedIndex cs
+           in applyBoost highlightedAbil (currentStats cs)
+        PickBackgroundChoice ->
+          let currentBg = fromJust (chosenBackground cs)
+              options = choices (getBackgroundBoosts currentBg)
+              highlightedAbil = options !! selectedIndex cs
+           in applyBoost highlightedAbil (currentStats cs)
+        PickBackgroundFreeBoost ->
+          let allAbilities = [Str .. Cha]
+              highlightedAbil = allAbilities !! selectedIndex cs
+           in applyBoost highlightedAbil (currentStats cs)
+        PickKeyAbility ->
+          let currentCls = fromJust (chosenClass cs)
+              options = getKeyAbilityOptions currentCls
+              highlightedAbil = options !! selectedIndex cs
+           in applyBoost highlightedAbil (currentStats cs)
         _ -> currentStats cs
 
   -- Placeholder for the info box
@@ -131,6 +149,15 @@ renderCharacterCreation cs = do
       mapM_ (renderBackgroundChoice (selectedIndex cs)) (zip [0 ..] pageItems)
       putStrLn clearRestOfLine
       putStrLn $ " [a] Previous Page  [d] Next Page" ++ clearRestOfLine
+    PickBackgroundChoice -> do
+      putStrLn $ " Pick your Background Boost:" ++ clearRestOfLine
+      let currentBg = fromJust (chosenBackground cs)
+          options = choices (getBackgroundBoosts currentBg)
+      mapM_ (renderStatChoice (selectedIndex cs)) (zip [0 ..] options)
+    PickBackgroundFreeBoost -> do
+      putStrLn $ " Pick your Free Background Boost:" ++ clearRestOfLine
+      let allAbilities = [Str .. Cha]
+      mapM_ (renderStatChoice (selectedIndex cs)) (zip [0 ..] allAbilities)
     PickClass -> do
       let allClasses = [minBound .. maxBound] :: [Class]
           pageItems = take 10 . drop (currentPage cs * 10) $ allClasses
