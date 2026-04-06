@@ -84,19 +84,19 @@ renderCharacterCreation cs = do
 
   -- Sidebar to display stats
   let renderSidebar stats = do
-        putStr "\ESC[3;40H" -- Move cursor to row 3, col 40
+        putStr "\ESC[3;60H" -- Move cursor to row 3, col 60
         putStrLn $ bold $ cyan "  CURRENT STATS  " ++ clearRestOfLine
-        putStr "\ESC[4;40H"
+        putStr "\ESC[4;60H"
         putStrLn $ "  Str: " ++ show (str stats) ++ clearRestOfLine
-        putStr "\ESC[5;40H"
+        putStr "\ESC[5;60H"
         putStrLn $ "  Dex: " ++ show (dex stats) ++ clearRestOfLine
-        putStr "\ESC[6;40H"
+        putStr "\ESC[6;60H"
         putStrLn $ "  Con: " ++ show (con stats) ++ clearRestOfLine
-        putStr "\ESC[7;40H"
+        putStr "\ESC[7;60H"
         putStrLn $ "  Int: " ++ show (int stats) ++ clearRestOfLine
-        putStr "\ESC[8;40H"
+        putStr "\ESC[8;60H"
         putStrLn $ "  Wis: " ++ show (wis stats) ++ clearRestOfLine
-        putStr "\ESC[9;40H"
+        putStr "\ESC[9;60H"
         putStrLn $ "  Cha: " ++ show (cha stats) ++ clearRestOfLine
 
   -- Calculate stat preview based on the highlight
@@ -132,10 +132,10 @@ renderCharacterCreation cs = do
         _ -> currentStats cs
 
   -- Placeholder for the info box
-  putStr "\ESC[18;1H"
-  putStrLn $ replicate 60 '-' ++ clearRestOfLine
+  putStr "\ESC[22;1H"
+  putStrLn $ replicate 80 '-' ++ clearRestOfLine
   putStrLn $ " INFO: TO BE IMPLEMENTED" ++ clearRestOfLine
-  putStrLn $ replicate 60 '-' ++ clearRestOfLine
+  putStrLn $ replicate 80 '-' ++ clearRestOfLine
 
   -- Move cursor back to line 3 for the list
   putStr "\ESC[3;1H"
@@ -179,7 +179,7 @@ renderCharacterCreation cs = do
           options = getKeyAbilityOptions currentCls
       mapM_ (renderStatChoice (selectedIndex cs)) (zip [0 ..] options)
     PickFinalBoosts chosenBoosts -> do
-      putStrLn $ " Final Attribute Boosts (" ++ show (length chosenBoosts) ++ "/4" ++ clearRestOfLine
+      putStrLn $ " Final Attribute Boosts (" ++ show (length chosenBoosts) ++ "/4)" ++ clearRestOfLine
       putStrLn $ " Choose 4 different attributes to increase by +2." ++ clearRestOfLine
       let allAbilities = [Str .. Cha]
       mapM_
