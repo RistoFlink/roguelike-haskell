@@ -1,4 +1,4 @@
-module Flavor (getAncestryFlavor, getBackgroundFlavor, getClassFavor) where
+module Flavor (getAncestryFlavor, getBackgroundFlavor, getClassFlavor) where
 
 import Types
 

@@ -19,10 +19,12 @@ executable roguelike
     Combat
     Dungeon
     Entity
+    Flavor
     Monsters
     Rendering
     Stats
     Types
+    Utils
 
   build-depends:
     base >=4.14 && <5,

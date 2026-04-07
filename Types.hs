@@ -22,6 +22,7 @@ where
 import Data.Set qualified as Set
 import Stats
 import System.Random (StdGen)
+import Utils
 
 -- Position in the dungeon
 data Position = Position
@@ -187,10 +188,3 @@ data CombatStats = CombatStats
     armorClass :: Int
   }
   deriving (Show, Eq)
-
--- Constants
-dungeonWidth :: Int
-dungeonWidth = 50
-
-dungeonHeight :: Int
-dungeonHeight = 20
