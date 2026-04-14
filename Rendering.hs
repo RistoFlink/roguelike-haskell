@@ -1,5 +1,5 @@
 module Rendering
-  ( renderApp, -- Renamed from renderGame
+  ( renderApp,
     clearScreen,
     hideCursor,
     showCursor,
@@ -115,6 +115,10 @@ renderCharacterCreation cs = do
 
   let flavor = case currentStep cs of
         PickAncestry -> getAncestryFlavor (playableAncestries !! selectedIndex cs)
+        PickClass ->
+          let allClasses = [minBound .. maxBound] :: [Class]
+              pageItems = take 10 . drop (currentPage cs * 10) $ allClasses
+           in getClassFlavor (pageItems !! selectedIndex cs)
         _ -> ""
 
   -- Render the info box at the bottom
