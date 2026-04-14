@@ -121,10 +121,13 @@ renderCharacterCreation cs = do
            in getClassFlavor (pageItems !! selectedIndex cs)
         _ -> ""
 
+  let flavorLines = wrapText 78 flavor
+      paddedFlavor = take 8 (flavorLines ++ replicate 8 "")
+
   -- Render the info box at the bottom
   putStr "\ESC[22;1H"
   putStrLn $ replicate 80 '-' ++ clearRestOfLine
-  mapM_ (\l -> putStrLn $ " " ++ l ++ clearRestOfLine) (wrapText 78 flavor)
+  mapM_ (\l -> putStrLn $ " " ++ l ++ clearRestOfLine) paddedFlavor
   putStrLn $ replicate 80 '-' ++ clearRestOfLine
 
   -- Move cursor back to line 3 for the list
