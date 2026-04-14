@@ -122,10 +122,10 @@ renderCharacterCreation cs = do
         _ -> ""
 
   let flavorLines = wrapText 78 flavor
-      paddedFlavor = take 8 (flavorLines ++ replicate 8 "")
+      paddedFlavor = take 7 (flavorLines ++ replicate 7 "")
 
   -- Render the info box at the bottom
-  putStr "\ESC[22;1H"
+  putStr "\ESC[21;1H"
   putStrLn $ replicate 80 '-' ++ clearRestOfLine
   mapM_ (\l -> putStrLn $ " " ++ l ++ clearRestOfLine) paddedFlavor
   putStrLn $ replicate 80 '-' ++ clearRestOfLine
@@ -202,14 +202,14 @@ renderBackgroundChoice currentIdx (idx, bg) =
 renderClassChoice :: Int -> (Int, Class) -> IO ()
 renderClassChoice currentIdx (idx, cls) =
   let highlight = if idx == currentIdx then bold (yellow "> ") else " "
-   in putStrLn $ highlight ++ show cls
+   in putStrLn $ highlight ++ show cls ++ clearRestOfLine
 
 renderStatChoice :: Int -> (Int, Ability) -> IO ()
 renderStatChoice currentIdx (idx, abil) =
   let highlight = if idx == currentIdx then bold (yellow "> ") else " "
    in putStrLn $ highlight ++ show abil ++ clearRestOfLine
 
--- Render the dungeon simulation (Existing logic)
+-- Render the dungeon simulation
 renderGame :: GameState -> IO ()
 renderGame state = do
   let cStats = playerCombatStats state
