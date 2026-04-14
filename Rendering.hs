@@ -12,6 +12,7 @@ import Class (getKeyAbilityOptions)
 import Data.List (find)
 import Data.Maybe (fromJust)
 import Data.Set qualified as Set
+import Flavor (getAncestryFlavor, getBackgroundFlavor, getClassFlavor)
 import Stats
 import Types
 import Utils
@@ -112,10 +113,14 @@ renderCharacterCreation cs = do
                 else applyBoost highlightedAbil baseWithChosen
         _ -> currentStats cs
 
-  -- Placeholder for the info box
+  let flavor = case currentStep cs of
+        PickAncestry -> getAncestryFlavor (playableAncestries !! selectedIndex cs)
+        _ -> ""
+
+  -- Render the info box at the bottom
   putStr "\ESC[22;1H"
   putStrLn $ replicate 80 '-' ++ clearRestOfLine
-  putStrLn $ " INFO: TO BE IMPLEMENTED" ++ clearRestOfLine
+  mapM_ (\l -> putStrLn $ " " ++ l ++ clearRestOfLine) (wrapText 78 flavor)
   putStrLn $ replicate 80 '-' ++ clearRestOfLine
 
   -- Move cursor back to line 3 for the list
