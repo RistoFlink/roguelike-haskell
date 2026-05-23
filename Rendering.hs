@@ -59,7 +59,6 @@ renderGameOverScreen maybeGs = do
 -- Render the character creation menu
 renderCharacterCreation :: CreationState -> IO ()
 renderCharacterCreation cs = do
-  clearScreen
   putStr $ hideCursor ++ "\ESC[H"
   putStrLn $ bold (yellow " CHARACTER CREATION ") ++ clearRestOfLine
   putStrLn clearRestOfLine
@@ -115,6 +114,10 @@ renderCharacterCreation cs = do
 
   let flavor = case currentStep cs of
         PickAncestry -> getAncestryFlavor (playableAncestries !! selectedIndex cs)
+        PickBackground ->
+          let allBackgrounds = [minBound .. maxBound] :: [Background]
+              pageItems = take 10 . drop (currentPage cs * 10) $ allBackgrounds
+           in getBackgroundFlavor (pageItems !! selectedIndex cs)
         PickClass ->
           let allClasses = [minBound .. maxBound] :: [Class]
               pageItems = take 10 . drop (currentPage cs * 10) $ allClasses
@@ -137,6 +140,7 @@ renderCharacterCreation cs = do
     PickAncestry -> do
       putStrLn $ " Pick your Ancestry:" ++ clearRestOfLine
       mapM_ (renderAncestryChoice (selectedIndex cs)) (zip [0 ..] playableAncestries)
+      mapM_ (\_ -> putStrLn clearRestOfLine) [1 .. 15]
     PickAncestryFreeBoost -> do
       putStrLn $ " Pick your Free Ancestry Boost:" ++ clearRestOfLine
       let allAbilities = [Str .. Cha]
