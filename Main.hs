@@ -8,6 +8,7 @@ import Data.Maybe (fromJust)
 import Data.Set qualified as Set
 import Dungeon (findEmptySpace, generateDungeon)
 import Entity (spawnItems, spawnMonsters)
+import Random (randomizeCharacter)
 import Rendering (renderApp, showCursor)
 import Stats (Ability (..), Stats (..), applyBoost, baseStats)
 import System.IO (BufferMode (NoBuffering), hSetBuffering, hSetEcho, stdin, stdout)
@@ -121,6 +122,10 @@ handleGameInput c state =
 
 -- Handle the choices in character creation
 handleCreationInput :: Char -> CreationState -> App -> IO App
+handleCreationInput 'z' _ app = do
+  (anc, cls, stats) <- randomizeCharacter
+  initialGame <- initGame anc cls stats
+  return app {currentScreen = Playing, gameState = Just initialGame, creation = Nothing}
 handleCreationInput c cs app = case currentStep cs of
   PickAncestry -> case c of
     'w' -> return app {creation = Just cs {selectedIndex = max 0 (selectedIndex cs - 1)}}
