@@ -35,34 +35,21 @@ spawnItems dungeon n gen =
 
 -- Move all monsters and handle combat
 moveMonsters :: GameState -> GameState
-moveMonsters state =
-  let results = map (moveMonster state) (monsters state)
-      movedMonsters = map fst results
-      didAttackList = map snd results
-      (playerDamage, msgs) = foldl calcDamage (0, []) (zip movedMonsters didAttackList)
-      newHealth = playerHealth state - playerDamage
-      combatMsg =
-        if playerDamage > 0
-          then unwords msgs ++ " (-" ++ show playerDamage ++ " HP)"
-          else ""
-      isGameOver = newHealth <= 0
-      currentMsg = message state
-      finalMsg
-        | isGameOver = "You died! Press Q to quit."
-        | null combatMsg = currentMsg
-        | null currentMsg = combatMsg
-        | otherwise = currentMsg ++ " " ++ combatMsg
-   in state
-        { monsters = movedMonsters,
-          playerHealth = newHealth,
-          message = finalMsg,
-          gameOver = isGameOver
-        }
+moveMonsters initialState =
+  foldl handleMonsterTurn initialState (monsters initialState)
   where
-    calcDamage (dmg, msgs) (_, didAttack) =
-      if didAttack
-        then (dmg + 2, msgs ++ ["Monster attacks!"])
-        else (dmg, msgs)
+    handleMonsterTurn state monster =
+      let isAlive = monster `elem` monsters state
+       in if isAlive
+            then processSingleMonster state monster
+            else state
+
+    processSingleMonster state monster =
+      let (movedMonster, didAttack) = moveMonster state monster
+          stateWithMoved = state {monsters = map (\m -> if m == monster then movedMonster else m) (monsters state)}
+       in if didAttack
+            then performMonsterAttack movedMonster stateWithMoved
+            else stateWithMoved
 
 -- Move a single monster toward the player
 moveMonster :: GameState -> Monster -> (Monster, Bool)
@@ -78,6 +65,34 @@ moveMonster state monster
     isValidMove =
       getTile (dungeon state) newPos == Floor
         && not (any (\m -> mPos m == newPos) (monsters state))
+
+performMonsterAttack :: Monster -> GameState -> GameState
+performMonsterAttack monster state =
+  let (attackRoll, gen1) = randomR (1, 20 :: Int) (rng state)
+      (damageRoll, gen2) = randomR (1, 6 :: Int) gen1
+
+      targetAC = armorClass (playerCombatStats state)
+      attackBonus = 4
+      totalAttack = attackRoll + attackBonus
+
+      isCrit = attackRoll == 20 || totalAttack >= targetAC + 10
+      isHit = attackRoll /= 1 && (totalAttack >= targetAC || isCrit)
+
+      dmg = if isHit then (if isCrit then damageRoll * 2 else damageRoll) else 0
+
+      atkMsg =
+        if isHit
+          then (if isCrit then "Critical hit! " else "") ++ "The " ++ show (mType monster) ++ " deals " ++ show dmg ++ " damage!"
+          else "The " ++ show (mType monster) ++ " missed you!"
+
+      newHealth = playerHealth state - dmg
+      newMsg = if null (message state) then atkMsg else message state ++ " " ++ atkMsg
+   in state
+        { playerHealth = newHealth,
+          message = newMsg,
+          rng = gen2,
+          gameOver = newHealth <= 0
+        }
 
 -- Pick up an item and apply its effect
 pickupItem :: Item -> GameState -> GameState
