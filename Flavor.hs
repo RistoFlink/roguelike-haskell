@@ -202,7 +202,7 @@ getBackgroundFlavor Scholar =
     ++ "and always dreamed about one day seeing the real things. "
     ++ "Eventually, that curiosity led you to leave your studies and "
     ++ "become an adventurer."
-getBackgroundFlavor Scount =
+getBackgroundFlavor Scout =
   "You called the wilderness home as you found trails and guided "
     ++ "travelers. Your wanderlust could have called you to the "
     ++ "adventuring life, or perhaps you served as a scout for soldiers "
@@ -224,7 +224,6 @@ getBackgroundFlavor Warrior =
     ++ "militia or army. You might have wanted to break out from "
     ++ "the regimented structure of these forces, or you could have "
     ++ "always been as independent a warrior as you are now."
-getBackgroundFlavor _ = "Coming soon"
 
 getClassFlavor :: Class -> String
 getClassFlavor Alchemist =
