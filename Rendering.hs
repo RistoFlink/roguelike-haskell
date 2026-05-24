@@ -50,7 +50,7 @@ renderGameOverScreen maybeGs = do
   putStrLn $ bold $ red "      GAME OVER      "
   putStrLn ""
   case maybeGs of
-    Just gs -> putStrLn $ "  You died." -- Depth stats can go here later
+    Just _ -> putStrLn $ "  You died." -- Depth stats can go here later
     Nothing -> return ()
   putStrLn ""
   putStrLn "  [r] Restart"
@@ -140,7 +140,7 @@ renderCharacterCreation cs = do
     PickAncestry -> do
       putStrLn $ " Pick your Ancestry:" ++ clearRestOfLine
       mapM_ (renderAncestryChoice (selectedIndex cs)) (zip [0 ..] playableAncestries)
-      mapM_ (\_ -> putStrLn clearRestOfLine) [1 .. 15]
+      mapM_ (\_ -> putStrLn clearRestOfLine) [1 .. 15 :: Int]
     PickAncestryFreeBoost -> do
       putStrLn $ " Pick your Free Ancestry Boost:" ++ clearRestOfLine
       let allAbilities = [Str .. Cha]
@@ -169,7 +169,7 @@ renderCharacterCreation cs = do
       putStrLn $ " Pick your Class (Page " ++ show (currentPage cs + 1) ++ "/" ++ show (maxPage + 1) ++ "):"
       mapM_ (renderClassChoice (selectedIndex cs)) (zip [0 ..] pageItems)
       putStrLn ""
-      putStrLn $ " [a] Previous Page [d] Next Page"
+      putStrLn " [a] Previous Page [d] Next Page"
     PickKeyAbility -> do
       putStrLn $ " Pick your Class Key Ability:" ++ clearRestOfLine
       let currentCls = fromJust (chosenClass cs)
@@ -213,10 +213,20 @@ renderStatChoice currentIdx (idx, abil) =
   let highlight = if idx == currentIdx then bold (yellow "> ") else " "
    in putStrLn $ highlight ++ show abil ++ clearRestOfLine
 
+renderMapRow :: Int -> GameState -> String
+renderMapRow y state =
+  let currentVisible = getVisibleTiles state
+      allExplored = exploredTiles state
+   in concat
+        [ getCharForFogOfWar (Position x y) state currentVisible allExplored
+          | x <- [0 .. dungeonWidth - 1]
+        ]
+
 -- Render the dungeon simulation
 renderGame :: GameState -> IO ()
 renderGame state = do
   let cStats = playerCombatStats state
+      stats = playerStats state
       header =
         bold "HP: "
           ++ (if playerHealth state < 5 then brightRed else green)
@@ -229,17 +239,29 @@ renderGame state = do
 
       separator = replicate dungeonWidth '-' ++ clearRestOfLine
 
-      currentVisible = getVisibleTiles state
-      allExplored = exploredTiles state
+      -- Create the sidebar lines
+      sidebar =
+        [ bold (yellow " CHARACTER "),
+          show (playerAncestry state) ++ " " ++ show (playerClass state),
+          replicate 15 '-',
+          "",
+          cyan " Str: " ++ show (str stats),
+          cyan " Dex: " ++ show (dex stats),
+          cyan " Con: " ++ show (con stats),
+          cyan " Int: " ++ show (int stats),
+          cyan " Wis: " ++ show (wis stats),
+          cyan " Cha: " ++ show (cha stats),
+          "",
+          bold (green " COMBAT "),
+          " AC: " ++ show (armorClass cStats),
+          " Atk: +" ++ show (meleeAttack cStats)
+        ]
 
       mapLines =
-        [ concat
-            [ getCharForFogOfWar (Position x y) state currentVisible allExplored
-              | x <- [0 .. dungeonWidth - 1]
-            ]
-            ++ clearRestOfLine
-          | y <- [0 .. dungeonHeight - 1]
-        ]
+        zipWith
+          (\y side -> renderMapRow y state ++ "  " ++ side ++ clearRestOfLine)
+          [0 .. dungeonHeight - 1]
+          (sidebar ++ repeat "")
 
       msg = message state ++ clearRestOfLine
 
