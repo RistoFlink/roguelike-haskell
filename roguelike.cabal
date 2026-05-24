@@ -21,6 +21,7 @@ executable roguelike
     Entity
     Flavor
     Monsters
+    Random
     Rendering
     Stats
     Types
