@@ -26,7 +26,7 @@ initGame anc cls finalStats = do
   let (dungeon', _, gen1) = generateDungeon gen
       (startPos, gen2) = findEmptySpace dungeon' gen1
       dungeonWithStart = setTile dungeon' startPos StairsUp
-      (monsters', gen3) = spawnMonsters dungeonWithStart 8 gen2
+      (monsters', gen3) = spawnMonsters dungeonWithStart 4 gen2
       (items', gen4) = spawnItems dungeonWithStart 5 gen3
 
       -- PF2e lvl 1 calculations
@@ -298,7 +298,7 @@ descendLevel state =
 
       -- Scale difficulty based on level
       newDepth = dungeonDepth state + 1
-      monsterCount = 8 + (newDepth * 2)
+      monsterCount = 2 + (newDepth * 2)
 
       (newMonsters, gen3) = spawnMonsters finalDungeon monsterCount gen2
       (newItems, gen4) = spawnItems finalDungeon 5 gen3
