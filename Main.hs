@@ -6,7 +6,7 @@ import Class (getClassHP, getKeyAbilityOptions)
 import Combat (movePlayer)
 import Data.Maybe (fromJust)
 import Data.Set qualified as Set
-import Dungeon (findEmptySpace, generateDungeon)
+import Dungeon (findEmptySpace, generateDungeon, getTile, setTile)
 import Entity (spawnItems, spawnMonsters)
 import Random (randomizeCharacter)
 import Rendering (renderApp, showCursor)
@@ -23,10 +23,11 @@ initApp = return $ App {currentScreen = MainMenu, gameState = Nothing, creation 
 initGame :: Ancestry -> Class -> Stats -> IO GameState
 initGame anc cls finalStats = do
   gen <- getStdGen
-  let (dungeon', gen1) = generateDungeon gen
-      (playerPos', gen2) = findEmptySpace dungeon' gen1
-      (monsters', gen3) = spawnMonsters dungeon' 8 gen2
-      (items', gen4) = spawnItems dungeon' 5 gen3
+  let (dungeon', _, gen1) = generateDungeon gen
+      (startPos, gen2) = findEmptySpace dungeon' gen1
+      dungeonWithStart = setTile dungeon' startPos StairsUp
+      (monsters', gen3) = spawnMonsters dungeonWithStart 8 gen2
+      (items', gen4) = spawnItems dungeonWithStart 5 gen3
 
       -- PF2e lvl 1 calculations
       conMod = (con finalStats - 10) `div` 2
@@ -40,19 +41,20 @@ initGame anc cls finalStats = do
       cStats = CombatStats {maxHP = hp, meleeAttack = atk, armorClass = ac}
   return
     GameState
-      { playerPos = playerPos',
+      { playerPos = startPos,
         playerHealth = hp,
         playerStats = finalStats,
         playerCombatStats = cStats,
         playerAncestry = anc,
         playerClass = cls,
-        dungeon = dungeon',
+        dungeon = dungeonWithStart,
         monsters = monsters',
         items = items',
         message = "Welcome! Use WASD to move.",
         gameOver = False,
         rng = gen4,
-        exploredTiles = Set.singleton playerPos'
+        exploredTiles = Set.singleton startPos,
+        dungeonDepth = 1
       }
 
 -- Main application loop
@@ -117,6 +119,10 @@ handleGameInput c state =
         's' -> movePlayer (Position (x (playerPos state)) (y (playerPos state) + 1)) state
         'd' -> movePlayer (Position (x (playerPos state) + 1) (y (playerPos state))) state
         'q' -> state {gameOver = True} -- This will trigger the transition to GameOverScreen in handleAppInput
+        '>' ->
+          if getTile (dungeon state) (playerPos state) == StairsDown
+            then descendLevel state
+            else state {message = "You can't go down here."}
         _ -> state
    in updateVisibility newState
 
@@ -280,6 +286,31 @@ handleCreationInput c cs app = case currentStep cs of
       state
         { currentStep = PickFinalBoosts [],
           currentStats = applyBoost abil (currentStats state)
+        }
+
+descendLevel :: GameState -> GameState
+descendLevel state =
+  let (newDungeon, _, gen1) = generateDungeon (rng state)
+
+      -- Place the player on an empty space which becomes StairsUp
+      (startPos, gen2) = findEmptySpace newDungeon gen1
+      finalDungeon = setTile newDungeon startPos StairsUp
+
+      -- Scale difficulty based on level
+      newDepth = dungeonDepth state + 1
+      monsterCount = 8 + (newDepth * 2)
+
+      (newMonsters, gen3) = spawnMonsters finalDungeon monsterCount gen2
+      (newItems, gen4) = spawnItems finalDungeon 5 gen3
+   in state
+        { playerPos = startPos,
+          dungeon = finalDungeon,
+          monsters = newMonsters,
+          items = newItems,
+          message = "You descend to depth " ++ show newDepth ++ "...",
+          rng = gen4,
+          exploredTiles = Set.singleton startPos,
+          dungeonDepth = newDepth
         }
 
 -- Update visibility (Fog of War)

@@ -36,6 +36,8 @@ data Tile
   = Floor
   | Wall
   | Door
+  | StairsUp
+  | StairsDown
   deriving (Eq, Show)
 
 -- Type of entities (monsters, items, etc.)
@@ -76,7 +78,8 @@ data GameState = GameState
     message :: String,
     gameOver :: Bool,
     rng :: StdGen,
-    exploredTiles :: Set.Set Position
+    exploredTiles :: Set.Set Position,
+    dungeonDepth :: Int
   }
   deriving (Show)
 

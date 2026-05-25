@@ -290,6 +290,8 @@ getCharForFogOfWar pos state currentVisible allExplored
         Wall -> "\ESC[38;5;240m#" ++ resetColor
         Floor -> "\ESC[38;5;240m." ++ resetColor
         Door -> "\ESC[38;5;240m+" ++ resetColor
+        StairsUp -> "\ESC[38;5;240m<" ++ resetColor
+        StairsDown -> "\ESC[38;5;240m>" ++ resetColor
   | otherwise =
       " "
 
@@ -312,6 +314,8 @@ getTileChar :: Tile -> String
 getTileChar Floor = blue "."
 getTileChar Wall = white "#"
 getTileChar Door = yellow "+"
+getTileChar StairsUp = yellow "<"
+getTileChar StairsDown = yellow ">"
 
 -- Helper function to get tile (imported from Dungeon via Types)
 getTile :: [[Tile]] -> Position -> Tile

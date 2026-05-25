@@ -2,6 +2,7 @@ module Dungeon
   ( generateDungeon,
     findEmptySpace,
     getTile,
+    setTile,
   )
 where
 
@@ -18,13 +19,15 @@ data Room = Room
   deriving (Show)
 
 -- Generate a dungeon with rooms and corridors
-generateDungeon :: StdGen -> ([[Tile]], StdGen)
+generateDungeon :: StdGen -> ([[Tile]], Position, StdGen)
 generateDungeon gen =
   let emptyDungeon = replicate dungeonHeight (replicate dungeonWidth Wall)
       (rooms, gen1) = generateRooms 8 gen []
       dungeonWithRooms = foldl carveRoom emptyDungeon rooms
       dungeonWithCorridors = carveCorridors dungeonWithRooms rooms
-   in (dungeonWithCorridors, gen1)
+      (stairsDownPos, gen2) = findEmptySpace dungeonWithCorridors gen1
+      dungeonWithStairs = setTile dungeonWithCorridors stairsDownPos StairsDown
+   in (dungeonWithStairs, stairsDownPos, gen2)
 
 -- Generate a list of non-overlapping rooms
 generateRooms :: Int -> StdGen -> [Room] -> ([Room], StdGen)

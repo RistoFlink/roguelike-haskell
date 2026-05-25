@@ -15,17 +15,25 @@ import Types
 -- Move the player to a new position and handle interactions
 movePlayer :: Position -> GameState -> GameState
 movePlayer newPos state
-  | getTile (dungeon state) newPos /= Floor =
+  | not (isPassable (getTile (dungeon state) newPos)) =
       state {message = "You bump into a wall."}
   | isJust monsterHere =
       attackMonster (fromJust monsterHere) state
   | isJust itemHere =
       pickupItem (fromJust itemHere) state {playerPos = newPos}
   | otherwise =
-      moveMonsters $ state {playerPos = newPos, message = ""}
+      let baseMsg = case targetTile of
+            StairsUp -> "You see stairs going up."
+            StairsDown -> "You see stairs going down."
+            _ -> ""
+       in moveMonsters $ state {playerPos = newPos, message = baseMsg}
   where
     monsterHere = find (\m -> mPos m == newPos) (monsters state)
     itemHere = find (\i -> iPos i == newPos) (items state)
+    targetTile = getTile (dungeon state) newPos
+
+    -- Helper to define what tiles the player can walk on
+    isPassable t = t == Floor || t == StairsUp || t == StairsDown
 
 -- Attack a monster and update the game state
 attackMonster :: Monster -> GameState -> GameState
